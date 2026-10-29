@@ -98,7 +98,6 @@ STRICT RULES:
 4. Be concise, warm, and empowering. Use encouraging, modern language that resonates with Gen Z and Millennials.
 5. Always bring the conversation back to the user's goals, wellbeing, or vision board.`;
 
-const getOpenAIKey = () => localStorage.getItem("elevatria_openai_key") || "";
 
 // Botanical leaf icon for section headings
 function LeafIcon({
@@ -275,19 +274,7 @@ export default function Dashboard() {
     userId ? getChatHistory(userId) : [],
   );
   const [chatInput, setChatInput] = useState("");
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiKeySaved, setApiKeySaved] = useState(
-    () => !!localStorage.getItem("elevatria_openai_key"),
-  );
   const [isChatLoading, setIsChatLoading] = useState(false);
-
-  const saveApiKey = () => {
-    if (apiKeyInput.trim()) {
-      localStorage.setItem("elevatria_openai_key", apiKeyInput.trim());
-      setApiKeySaved(true);
-      setApiKeyInput("");
-    }
-  };
 
   // Integration state
   const [webhookUrl, setWebhookUrl] = useState(() =>
@@ -511,28 +498,8 @@ export default function Dashboard() {
   };
 
   // Shared: call OpenAI with a given message history
-  const callOpenAI = async (messages: ChatMessage[]) => {
-    const last10 = messages.slice(-10);
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getOpenAIKey()}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...last10],
-        max_tokens: 600,
-        temperature: 0.8,
-      }),
-    });
-    if (response.status === 401) throw new Error("AUTH_ERROR");
-    if (response.status === 429) throw new Error("RATE_LIMIT");
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    const data = (await response.json()) as {
-      choices: Array<{ message: { content: string } }>;
-    };
-    return data.choices[0]?.message?.content ?? "I'm here for you! ✨";
+  const callOpenAI = async (_messages: ChatMessage[]): Promise<string> => {
+    throw new Error("AI coaching requires a server integration. Use the local planner demo.");
   };
 
   // Chat: send message
@@ -561,7 +528,7 @@ export default function Dashboard() {
       const errMsg: ChatMessage = {
         role: "assistant",
         content: isAuth
-          ? "The Elevatria Coach API key is invalid or has been revoked. Please update the API key in the source code to reconnect. 🔑"
+          ? "The Elevatria Coach API key is invalid or has been revoked. A server integration is required to reconnect. 🔑"
           : isRate
             ? "Too many requests right now -- give me a moment and try again! 💚"
             : "Something went off-track, but I'm still here for you! Try again in a moment. 💚",
@@ -632,7 +599,7 @@ export default function Dashboard() {
       const errMsg: ChatMessage = {
         role: "assistant",
         content: isAuth
-          ? "The Elevatria Coach API key is invalid or has been revoked. Please update the API key in the source code to reconnect. 🔑"
+          ? "The Elevatria Coach API key is invalid or has been revoked. A server integration is required to reconnect. 🔑"
           : isRate
             ? "Too many requests right now -- give me a moment and try again! 💚"
             : "Something went off-track while generating your roadmap. Try again in a moment. 💚",
@@ -1086,54 +1053,7 @@ export default function Dashboard() {
               ) : (
                 /* Unlocked coach for Pro/Elite tiers */
                 <>
-                  {/* API Key Input */}
-                  <div
-                    className="mb-3 p-3 rounded-xl flex flex-col gap-2"
-                    style={{
-                      background: "oklch(0.97 0.005 85)",
-                      border: "1px solid oklch(0.92 0.008 85)",
-                    }}
-                  >
-                    <p
-                      className="font-sans text-[11px] tracking-widest uppercase"
-                      style={{ color: "oklch(0.5 0.01 85)" }}
-                    >
-                      {apiKeySaved
-                        ? "✅ OpenAI Key Active — paste a new key to update"
-                        : "🔑 Paste your OpenAI API key to activate the Coach"}
-                    </p>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
-                        placeholder="sk-proj-..."
-                        data-ocid="coach.api_key.input"
-                        className="flex-1 rounded-lg px-3 py-2 font-mono text-[12px] outline-none"
-                        style={{
-                          background: "oklch(1 0 0 / 0.8)",
-                          border: "1px solid oklch(0.88 0.008 85)",
-                          color: "oklch(0.22 0 0)",
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveApiKey();
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={saveApiKey}
-                        data-ocid="coach.api_key.save_button"
-                        disabled={!apiKeyInput.trim()}
-                        className="rounded-lg px-3 py-2 font-sans text-[11px] tracking-widest transition-all disabled:opacity-40"
-                        style={{
-                          background: "oklch(0.68 0.06 140)",
-                          color: "white",
-                        }}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
+                  <p className="mb-3">Prototype: AI coaching is unavailable until a server integration is configured. Never enter provider keys in this browser.</p>
                   {/* ✨ Generate 7-Day Roadmap Button */}
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
