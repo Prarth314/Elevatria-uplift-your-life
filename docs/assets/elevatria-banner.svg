@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350" role="img" aria-labelledby="title desc">
+  <title id="title">Elevatria — Uplift Your Life</title>
+  <desc id="desc">An editorial botanical banner in forest green and warm cream. Imagine your future. Make a little progress today.</desc>
+  <defs>
+    <linearGradient id="paper" x2="1" y2="1"><stop stop-color="#f5f7ee"/><stop offset="1" stop-color="#e9eedf"/></linearGradient>
+    <clipPath id="arch"><path d="M906 302V148a103 103 0 0 1 206 0v154Z"/></clipPath>
+  </defs>
+  <rect width="1200" height="350" rx="18" fill="url(#paper)"/>
+  <rect x="18" y="18" width="1164" height="314" rx="9" fill="none" stroke="#c9d4bd"/>
+  <path d="M64 79h51M64 83h35" stroke="#809573" stroke-width="1.5"/>
+  <text x="64" y="115" fill="#687c5b" font-family="Arial, sans-serif" font-size="11" letter-spacing="4">A LITTLE INTENTION. A LOT OF POSSIBILITY.</text>
+  <text x="59" y="207" fill="#2d4d37" font-family="Georgia, serif" font-size="85" letter-spacing="-3">elevatria</text>
+  <text x="67" y="240" fill="#526b45" font-family="Arial, sans-serif" font-size="12" letter-spacing="6">UPLIFT YOUR LIFE</text>
+  <text x="65" y="290" fill="#6a7861" font-family="Georgia, serif" font-size="19" font-style="italic">Imagine your future. Make a little progress today.</text>
+  <path d="M892 302V148a117 117 0 0 1 234 0v154" fill="none" stroke="#a9b79a"/>
+  <g clip-path="url(#arch)">
+    <rect x="905" y="40" width="208" height="264" fill="#365844"/>
+    <circle cx="1047" cy="112" r="31" fill="#d5d4a5"/>
+    <path d="M849 287q69-199 179-82t140 20v100H849Z" fill="#6f875b"/>
+    <path d="M852 302q158-151 306-93v117H852Z" fill="#91a477"/>
+    <path d="M953 315q108-77 55-96t50-64" fill="none" stroke="#e6e4c2" stroke-width="1.5" opacity=".8"/>
+  </g>
+  <g fill="none" stroke="#78906a" stroke-width="1.5">
+    <path d="M817 294V161m0 72c-47-1-48-35-48-35 43-2 48 35 48 35Zm0 30c43-1 43-34 43-34-39-1-43 34-43 34Z"/>
+    <circle cx="817" cy="147" r="10"/>
+    <path d="M817 137c-26-28-43 3-10 8-39-6-34 32 1 13-19 34 18 43 17 6 16 33 44 6 12-8 37 1 31-36-2-20 21-30-15-47-18 1Z"/>
+  </g>
+  <circle cx="747" cy="90" r="3" fill="#9eaf8b"/>
+  <path d="M742 85l10 10m-10 0 10-10" stroke="#9eaf8b"/>
+</svg>
