@@ -1,0 +1,717 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Pre-bundled Fonts ─────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/assets/fonts/InstrumentSerif-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/assets/fonts/InstrumentSerif-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Outfit';
+  src: url('/assets/fonts/Outfit-VariableFont_wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/assets/fonts/Fraunces[SOFT,WONK]opsz,wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 1rem;
+
+    /* Clean Girl Palette — OKLCH raw L C H values */
+    --background: 0.975 0.006 85;
+    --foreground: 0.22 0 0;
+    --card: 1 0 0;
+    --card-foreground: 0.22 0 0;
+    --popover: 1 0 0;
+    --popover-foreground: 0.22 0 0;
+    --primary: 0.68 0.06 140;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.94 0.012 85;
+    --secondary-foreground: 0.22 0 0;
+    --muted: 0.96 0.006 85;
+    --muted-foreground: 0.5 0.01 85;
+    --accent: 0.88 0.03 140;
+    --accent-foreground: 0.3 0.04 140;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 1 0 0;
+    --border: 0.9 0.008 85;
+    --input: 0.9 0.008 85;
+    --ring: 0.68 0.06 140;
+    --chart-1: 0.68 0.06 140;
+    --chart-2: 0.75 0.08 95;
+    --chart-3: 0.82 0.05 55;
+    --chart-4: 0.6 0.08 200;
+    --chart-5: 0.5 0.1 30;
+    --sidebar: 0.97 0.008 85;
+    --sidebar-foreground: 0.22 0 0;
+    --sidebar-primary: 0.68 0.06 140;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.88 0.03 140;
+    --sidebar-accent-foreground: 0.3 0.04 140;
+    --sidebar-border: 0.9 0.008 85;
+    --sidebar-ring: 0.68 0.06 140;
+    --cream: 0.975 0.006 85;
+    --sage: 0.68 0.06 140;
+    --sage-light: 0.88 0.03 140;
+    --sage-dark: 0.45 0.07 140;
+    --warm-text: 0.22 0 0;
+    --warm-muted: 0.5 0.01 85;
+    --surface: 1 0 0;
+    --surface-elevated: 0.985 0.006 85;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-foreground;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    background-color: oklch(0.975 0.006 85);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.038'/%3E%3C/svg%3E"),
+      linear-gradient(160deg, #F9F7F2 0%, #F2EFE9 100%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    line-height: 1.2;
+    font-weight: 400;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Instrument Serif', Georgia, serif;
+  }
+
+  .font-sans {
+    font-family: 'Outfit', system-ui, sans-serif;
+  }
+
+  .font-display {
+    font-family: 'Fraunces', 'Instrument Serif', Georgia, serif;
+  }
+
+  .text-sage {
+    color: oklch(var(--sage));
+  }
+
+  .bg-sage {
+    background-color: oklch(var(--sage));
+  }
+
+  .bg-sage-light {
+    background-color: oklch(var(--sage-light));
+  }
+
+  .bg-cream {
+    background-color: oklch(var(--cream));
+  }
+
+  .border-sage {
+    border-color: oklch(var(--sage));
+  }
+
+  .border-sage-light {
+    border-color: oklch(var(--sage-light));
+  }
+
+  /* ── Editorial heading — Vogue-style ────────────────────────────────── */
+  .editorial-heading {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+  }
+
+  /* ── Glassmorphism 2.0 ───────────────────────────────────────────────── */
+  .glass-card {
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    background: var(--glass-bg, rgba(255, 255, 255, 0.55));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.4));
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+  }
+
+  /* ── Pill shimmer button ─────────────────────────────────────────────── */
+  @keyframes shimmer-pass {
+    0%   { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  .btn-shimmer {
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, oklch(0.68 0.06 140), oklch(0.55 0.06 148));
+    color: white;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 55%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.38) 50%,
+      transparent 100%
+    );
+    animation: shimmer-pass 1s ease-in-out 5s infinite;
+    pointer-events: none;
+  }
+
+  /* ── Magnetic button hover ───────────────────────────────────────────── */
+  .btn-magnetic {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+
+  .btn-magnetic:hover {
+    transform: scale(1.04);
+    box-shadow: 0 6px 24px oklch(var(--sage) / 0.35);
+  }
+
+  .btn-magnetic:active {
+    transform: scale(0.98);
+  }
+
+  /* ── Vision cell luxury hover ────────────────────────────────────────── */
+  .vision-cell-luxury {
+    border-radius: 24px;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+    box-shadow:
+      0 8px 24px oklch(0.72 0.04 85 / 0.18),
+      0 2px 6px oklch(0.72 0.04 85 / 0.10);
+  }
+
+  .vision-cell-luxury:hover {
+    transform: scale(1.02) translateY(-4px);
+    box-shadow:
+      0 16px 40px oklch(0.72 0.04 85 / 0.22),
+      0 4px 12px oklch(0.72 0.04 85 / 0.14);
+  }
+
+  /* ── Page transition ─────────────────────────────────────────────────── */
+  @keyframes page-enter {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-transition {
+    animation: page-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* ── GlowUp Progress Bar ─────────────────────────────────────────────── */
+  .glowup-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, oklch(0.78 0.09 85), oklch(0.72 0.08 75), oklch(0.68 0.06 140));
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 100;
+    box-shadow: 0 0 8px oklch(0.78 0.09 85 / 0.5);
+  }
+
+  /* ── Sparkle loading animation ───────────────────────────────────────── */
+  @keyframes sparkle-pulse {
+    0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    25% { opacity: 0.6; transform: scale(1.2) rotate(90deg); }
+    50% { opacity: 1; transform: scale(0.8) rotate(180deg); }
+    75% { opacity: 0.7; transform: scale(1.15) rotate(270deg); }
+  }
+
+  .sparkle-loader {
+    display: inline-block;
+    animation: sparkle-pulse 1.8s ease-in-out infinite;
+  }
+
+  /* ── Affirmation loading text ────────────────────────────────────────── */
+  @keyframes affirmation-cycle {
+    0%, 100% { opacity: 0; transform: translateY(6px); }
+    15%, 85% { opacity: 1; transform: translateY(0); }
+  }
+
+  .affirmation-loading {
+    animation: affirmation-cycle 3s ease-in-out infinite;
+  }
+
+  /* ── Animated aura blobs ─────────────────────────────────────────────── */
+  @keyframes blob-drift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(40px, -30px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+  }
+
+  @keyframes blob-drift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-35px, 25px) scale(1.08); }
+    66% { transform: translate(30px, -15px) scale(0.92); }
+  }
+
+  @keyframes blob-drift-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(25px, 35px) scale(0.97); }
+    66% { transform: translate(-40px, -25px) scale(1.06); }
+  }
+
+  .aura-blob {
+    position: fixed;
+    border-radius: 9999px;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .aura-blob-1 {
+    width: 600px;
+    height: 500px;
+    background: var(--blob-1, #B4C3A9);
+    opacity: var(--blob-opacity, 0.07);
+    top: -100px;
+    left: -150px;
+    animation: blob-drift-1 18s ease-in-out infinite;
+  }
+
+  .aura-blob-2 {
+    width: 500px;
+    height: 600px;
+    background: var(--blob-2, #1B3022);
+    opacity: var(--blob-opacity, 0.05);
+    top: 30%;
+    right: -100px;
+    animation: blob-drift-2 22s ease-in-out infinite;
+  }
+
+  .aura-blob-3 {
+    width: 550px;
+    height: 450px;
+    background: var(--blob-3, #F5F2ED);
+    opacity: var(--blob-opacity, 0.08);
+    bottom: -80px;
+    left: 20%;
+    animation: blob-drift-3 25s ease-in-out infinite;
+  }
+
+  /* ── Floating Action Button ──────────────────────────────────────────── */
+  .fab-gratitude {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 52px;
+    height: 52px;
+    border-radius: 9999px;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 20px oklch(var(--sage) / 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+
+  .fab-gratitude:hover {
+    transform: scale(1.12);
+    box-shadow: 0 8px 30px oklch(var(--sage) / 0.4);
+  }
+
+  /* ── Affirmation zen animation ───────────────────────────────────────── */
+  @keyframes affirmation-zen {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .affirmation-zen {
+    animation: affirmation-zen 1.4s ease-out forwards;
+  }
+
+  /* ── Elegant thin divider ────────────────────────────────────────────── */
+  .elegant-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.7 0.02 140 / 0.4),
+      transparent
+    );
+    border: none;
+    margin: 0.5rem 0;
+  }
+
+  /* Glow orb decorative background */
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Soft card shadow */
+  .card-shadow {
+    box-shadow: 0 4px 24px 0 oklch(0.22 0 0 / 0.06), 0 1px 4px 0 oklch(0.22 0 0 / 0.04);
+  }
+
+  /* Typing dots animation */
+  @keyframes typing-dot {
+    0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-4px); }
+  }
+
+  .typing-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background-color: oklch(var(--sage));
+    animation: typing-dot 1.4s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .affirmation-banner {
+    background: linear-gradient(
+      135deg,
+      oklch(0.68 0.06 140) 0%,
+      oklch(0.72 0.07 150) 40%,
+      oklch(0.65 0.06 130) 100%
+    );
+  }
+
+  /* Scroll behavior for chat */
+  .chat-scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(var(--sage-light)) transparent;
+  }
+
+  .chat-scroll::-webkit-scrollbar { width: 4px; }
+  .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+  .chat-scroll::-webkit-scrollbar-thumb {
+    background-color: oklch(var(--sage-light));
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  .roadmap-btn {
+    background: linear-gradient(
+      135deg,
+      oklch(0.68 0.06 140) 0%,
+      oklch(0.55 0.07 140) 100%
+    );
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px oklch(0.55 0.07 140 / 0.25);
+  }
+
+  .roadmap-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+
+  .roadmap-btn:not(:disabled):hover::after {
+    transform: translateX(100%);
+  }
+
+  .roadmap-btn:not(:disabled):hover {
+    box-shadow: 0 4px 18px oklch(0.55 0.07 140 / 0.38);
+    transform: translateY(-1px);
+  }
+
+  .roadmap-btn:not(:disabled):active {
+    transform: translateY(0);
+  }
+}
+
+/* ─── Signature defaults (already in :root) ─────────────────────────────────── */
+:root {
+  --blob-1: #B4C3A9;
+  --blob-2: #1B3022;
+  --blob-3: #F5F2ED;
+  --blob-opacity: 0.07;
+  --glass-border: rgba(100, 140, 100, 0.35);
+  --glass-bg: rgba(255, 255, 255, 0.55);
+}
+
+/* ─── Theme: Midnight Muse — Electric Noir ──────────────────────────────────── */
+/* True Black #000000 · Deep Royal Purple #2D0054 · Neon Cyan #00F5FF          */
+[data-theme="midnight-muse"] {
+  color-scheme: dark;
+  --background: 0.05 0.01 300;
+  --foreground: 0.95 0.02 198;
+  --card: 0.10 0.10 295;
+  --card-foreground: 0.95 0.02 198;
+  --primary: 0.91 0.15 198;
+  --primary-foreground: 0.05 0.01 300;
+  --secondary: 0.14 0.12 295;
+  --secondary-foreground: 0.88 0.05 198;
+  --muted: 0.12 0.09 295;
+  --muted-foreground: 0.65 0.05 220;
+  --accent: 0.91 0.15 198;
+  --accent-foreground: 0.05 0.01 300;
+  --border: 0.22 0.14 295;
+  --input: 0.16 0.10 295;
+  --ring: 0.91 0.15 198;
+  --sage: 0.91 0.15 198;
+  --sage-light: 0.60 0.10 200;
+  --sage-dark: 0.40 0.12 295;
+  --cream: 0.05 0.01 300;
+  --warm-text: 0.95 0.02 198;
+  --warm-muted: 0.65 0.05 220;
+  --surface: 0.10 0.10 295;
+  --surface-elevated: 0.14 0.12 295;
+  --glass-border: rgba(0, 245, 255, 0.5);
+  --glass-bg: rgba(45, 0, 84, 0.45);
+  --blob-1: #00F5FF;
+  --blob-2: #2D0054;
+  --blob-3: #6600CC;
+  --blob-opacity: 0.08;
+}
+
+/* Star-field shimmer overlay for Midnight Muse */
+[data-theme="midnight-muse"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(1px 1px at 10% 20%, rgba(0,245,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(0,245,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 80%, rgba(0,245,255,0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.35) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+  animation: star-shimmer 8s ease-in-out infinite alternate;
+}
+
+@keyframes star-shimmer {
+  0%   { opacity: 0.5; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* ─── Midnight Muse: Heading Visibility Fix ─────────────────────────────────── */
+[data-theme="midnight-muse"] h1,
+[data-theme="midnight-muse"] h2,
+[data-theme="midnight-muse"] h3,
+[data-theme="midnight-muse"] h4,
+[data-theme="midnight-muse"] h5,
+[data-theme="midnight-muse"] h6,
+[data-theme="midnight-muse"] .editorial-heading,
+[data-theme="midnight-muse"] .section-title {
+  color: #E0E0E0;
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.4);
+}
+
+/* ─── Theme: Rose Quartz — Deep Sunset ──────────────────────────────────────── */
+/* Deep Terracotta #B25B48 · Muted Rose #8E5B5B · Warm Sand #D9C5B2            */
+[data-theme="rose-quartz"] {
+  --background: 0.82 0.04 50;
+  --foreground: 0.18 0.04 32;
+  --card: 0.85 0.035 52;
+  --card-foreground: 0.18 0.04 32;
+  --primary: 0.52 0.13 30;
+  --primary-foreground: 1 0 0;
+  --secondary: 0.78 0.04 50;
+  --secondary-foreground: 0.18 0.04 32;
+  --muted: 0.80 0.035 50;
+  --muted-foreground: 0.45 0.06 38;
+  --accent: 0.50 0.08 22;
+  --accent-foreground: 1 0 0;
+  --border: 0.72 0.06 40;
+  --input: 0.74 0.05 45;
+  --ring: 0.52 0.13 30;
+  --sage: 0.52 0.13 30;
+  --sage-light: 0.66 0.09 35;
+  --sage-dark: 0.36 0.10 28;
+  --cream: 0.82 0.04 50;
+  --warm-text: 0.18 0.04 32;
+  --warm-muted: 0.45 0.06 38;
+  --surface: 0.85 0.035 52;
+  --surface-elevated: 0.87 0.03 54;
+  --glass-border: rgba(178, 91, 72, 0.45);
+  --glass-bg: rgba(142, 91, 91, 0.3);
+  --blob-1: #B25B48;
+  --blob-2: #8E5B5B;
+  --blob-3: #D9C5B2;
+  --blob-opacity: 0.12;
+}
+
+/* Desert-dusk body background for Rose Quartz */
+[data-theme="rose-quartz"] body {
+  background-color: #4A2C2A;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E"),
+    linear-gradient(160deg, #4A2C2A 0%, #3A2020 100%);
+}
+
+/* Desert-dusk iridescent shimmer for Rose Quartz */
+[data-theme="rose-quartz"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg at 30% 40%,
+    rgba(178,91,72,0.06) 0deg,
+    rgba(142,91,91,0.07) 60deg,
+    rgba(217,197,178,0.05) 120deg,
+    rgba(178,91,72,0.05) 180deg,
+    rgba(142,91,91,0.06) 240deg,
+    rgba(200,160,140,0.04) 300deg,
+    rgba(178,91,72,0.06) 360deg
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: iridescent-drift 12s linear infinite;
+}
+
+@keyframes iridescent-drift {
+  0%   { transform: rotate(0deg) scale(1.5); opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { transform: rotate(360deg) scale(1.5); opacity: 0.6; }
+}
+
+/* ─── Theme: Cyber Pink — Futuristic ─────────────────────────────────────────── */
+/* Deep Charcoal #1A1A1D · Soft Neon Pink #FF2E63 · Pale Blush #F9ED69        */
+[data-theme="cyber-minimalist"] {
+  color-scheme: dark;
+  --background: 0.12 0.005 300;
+  --foreground: 0.95 0.12 88;
+  --card: 0.16 0.008 300;
+  --card-foreground: 0.95 0.12 88;
+  --primary: 0.58 0.22 5;
+  --primary-foreground: 0.12 0.005 300;
+  --secondary: 0.20 0.01 300;
+  --secondary-foreground: 0.88 0.10 88;
+  --muted: 0.18 0.008 300;
+  --muted-foreground: 0.65 0.08 10;
+  --accent: 0.92 0.18 98;
+  --accent-foreground: 0.12 0.005 300;
+  --border: 0.28 0.01 300;
+  --input: 0.22 0.01 300;
+  --ring: 0.58 0.22 5;
+  --sage: 0.58 0.22 5;
+  --sage-light: 0.75 0.15 5;
+  --sage-dark: 0.40 0.18 5;
+  --cream: 0.12 0.005 300;
+  --warm-text: 0.95 0.12 88;
+  --warm-muted: 0.65 0.08 10;
+  --surface: 0.16 0.008 300;
+  --surface-elevated: 0.20 0.01 300;
+  --glass-border: rgba(255, 46, 99, 0.3);
+  --glass-bg: rgba(26, 26, 29, 0.8);
+  --glass-shadow: 0 0 10px rgba(255, 46, 99, 0.35);
+  --blob-1: #FF2E63;
+  --blob-2: #1A1A1D;
+  --blob-3: #F9ED69;
+  --blob-opacity: 0.10;
+  --grid-color: rgba(255, 46, 99, 0.1);
+}
+
+/* Deep charcoal body background for Cyber Pink */
+[data-theme="cyber-minimalist"] body {
+  background: radial-gradient(circle at center, #2D1B22 0%, #0F0F12 100%);
+}
+
+/* Glowing pink grid overlay for Cyber Pink */
+[data-theme="cyber-minimalist"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 46, 99, 0.05) 2px,
+      rgba(255, 46, 99, 0.05) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(255, 46, 99, 0.05) 40px,
+      rgba(255, 46, 99, 0.05) 41px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Global: Card Text AA Accessibility ─────────────────────────────────────── */
+
+/* Dark themes: ensure card text is always light */
+[data-theme="midnight-muse"] .glass-card,
+[data-theme="cyber-minimalist"] .glass-card {
+  color: #F0F0F0;
+}
+
+[data-theme="midnight-muse"] .glass-card p,
+[data-theme="midnight-muse"] .glass-card span,
+[data-theme="midnight-muse"] .glass-card label,
+[data-theme="cyber-minimalist"] .glass-card p,
+[data-theme="cyber-minimalist"] .glass-card span,
+[data-theme="cyber-minimalist"] .glass-card label {
+  color: inherit;
+}
+
+/* Rose Quartz medium-dark: use dark text for good contrast on warm sand */
+[data-theme="rose-quartz"] .glass-card {
+  color: #F5EAE0;
+}
