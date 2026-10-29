@@ -6,19 +6,13 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import Admin from "./pages/Admin";
-import Dashboard from "./pages/Dashboard";
-import Landing from "./pages/Landing";
+import Planner from "./pages/Planner";
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 const rootRoute = createRootRoute({
   component: () => (
     <div className="relative min-h-screen">
-      {/* Animated aura background blobs */}
-      <div className="aura-blob aura-blob-1" aria-hidden="true" />
-      <div className="aura-blob aura-blob-2" aria-hidden="true" />
-      <div className="aura-blob aura-blob-3" aria-hidden="true" />
       <div className="relative z-10">
         <Outlet />
       </div>
@@ -30,25 +24,18 @@ const rootRoute = createRootRoute({
 const landingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: Landing,
+  component: Planner,
 });
 
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/dashboard",
-  component: Dashboard,
-});
-
-const adminRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin",
-  component: Admin,
+  component: Planner,
 });
 
 const routeTree = rootRoute.addChildren([
   landingRoute,
   dashboardRoute,
-  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });
