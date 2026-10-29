@@ -1,63 +1,25 @@
-import { fileURLToPath, URL } from "url";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
-import environment from "vite-plugin-environment";
-
-const ii_url =
-  process.env.DFX_NETWORK === "local"
-    ? `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:8081/`
-    : `https://identity.internetcomputer.org/`;
-
-process.env.II_URL = process.env.II_URL || ii_url;
-process.env.STORAGE_GATEWAY_URL =
-  process.env.STORAGE_GATEWAY_URL || "https://blob.caffeine.ai";
-
+import { fileURLToPath, URL } from 'node:url';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { privilegedCredential, publicKey, serviceUrl } from './src/planner/service-config.ts';
 export default defineConfig({
-  logLevel: "info",
- envDir: "../..",
-  build: {
-    emptyOutDir: true,
-    sourcemap: false,
-    minify: true,
+  logLevel:'info',envDir:'../..',publicDir:'public',
+  build:{emptyOutDir:true,sourcemap:false,minify:true},
+  css:{postcss:'./postcss.config.js'},
+  server:{
+    host:'127.0.0.1',cors:false,allowedHosts:['localhost'],
+    fs:{strict:true,deny:['**/.env','**/.env.*','**/*.{pem,key,p12,pfx}','**/.git/**']},
+    proxy:{'/api':{target:'http://127.0.0.1:5176',changeOrigin:false}},
+    headers:{'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'},
   },
-  publicDir: "public",
-  css: {
-    postcss: "./postcss.config.js",
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: "globalThis",
-      },
+  preview:{host:'127.0.0.1',allowedHosts:['localhost']},
+  plugins:[{
+    name:'public-environment-guard',
+    configResolved(config){
+      for(const [name,value] of Object.entries(config.env))if(name.startsWith('VITE_')&&privilegedCredential(value))throw Error(`Privileged credentials cannot be embedded in ${name}.`);
+      const key=config.env.VITE_SUPABASE_PUBLISHABLE_KEY,url=config.env.VITE_SUPABASE_URL;
+      if((key||url)&&(!publicKey(key)||!serviceUrl(url,config.command==='serve')))throw Error('Supabase public configuration requires an approved URL and publishable/anon key. No credentials were printed.');
     },
-  },
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://127.0.0.1:5176",
-        changeOrigin: true,
-      },
-    },
-  },
-  plugins: [
- { name: "reject-browser-service-keys", configResolved(config) { const key=config.env.VITE_SUPABASE_PUBLISHABLE_KEY; if(!key)return; let privileged=key.startsWith("sb_secret_"); try { if(key.split(".").length===3)privileged ||= JSON.parse(Buffer.from(key.split(".")[1],"base64url").toString()).role!=="anon"; }catch{privileged=true;} if(privileged)throw new Error("A privileged Supabase key cannot be used in a VITE_ variable. Use a publishable/anon key."); } },
-    environment("all", { prefix: "CANISTER_" }),
-    environment("all", { prefix: "DFX_" }),
-    environment(["II_URL"]),
-    environment(["STORAGE_GATEWAY_URL"]),
-    react(),
-  ],
-  resolve: {
-    alias: [
-      {
-        find: "declarations",
-        replacement: fileURLToPath(new URL("../declarations", import.meta.url)),
-      },
-      {
-        find: "@",
-        replacement: fileURLToPath(new URL("./src", import.meta.url)),
-      },
-    ],
-    dedupe: ["@dfinity/agent"],
-  },
+  },react()],
+  resolve:{alias:{'@':fileURLToPath(new URL('./src',import.meta.url))}},
 });

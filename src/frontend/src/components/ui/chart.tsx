@@ -1,3 +1,4 @@
+import { chartCss } from "@/lib/chart-style";
 "use client";
 
 import * as React from "react";
@@ -69,39 +70,7 @@ function ChartContainer({
   );
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color,
-  );
-
-  if (!colorConfig.length) {
-    return null;
-  }
-
-  return (
-    <style
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: injecting static theme CSS generated from trusted constants
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
-  );
-};
+const ChartStyle = ({id,config}:{id:string;config:ChartConfig}) => <style>{chartCss(id,config)}</style>;
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
