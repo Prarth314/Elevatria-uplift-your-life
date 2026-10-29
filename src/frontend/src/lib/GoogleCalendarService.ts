@@ -82,7 +82,7 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(out);
 }
 
-function fromBase64(value: string): Uint8Array {
+function fromBase64(value: string): Uint8Array<ArrayBuffer> {
   const decoded = atob(value);
   const bytes = new Uint8Array(decoded.length);
   for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
@@ -147,7 +147,7 @@ function hasRequiredScopes(scope: string): boolean {
  * It uses incremental authorization: silent first, then explicit consent if needed.
  */
 export async function ensureCalendarAccessToken(clientId: string): Promise<string> {
-  if (!isExpired(inMemoryToken) && hasRequiredScopes(inMemoryToken.scope)) {
+  if (inMemoryToken && !isExpired(inMemoryToken) && hasRequiredScopes(inMemoryToken.scope)) {
     return inMemoryToken.accessToken;
   }
 
