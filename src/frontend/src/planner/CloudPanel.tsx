@@ -1,30 +1,15 @@
+import { normalizeImageData } from "./images";
+import { publicKey, serviceUrl } from "./service-config";
+import { CloudEpoch, mayReplaceAfterSave } from "./cloud-state";
 import { useEffect, useRef, useState } from "react";
 import type { SupabaseClient, Session } from "@supabase/supabase-js";
-import type { Workspace } from "./model.ts";
+import type { Workspace, VisionItem } from "./model.ts";
 import { validWorkspace } from "./model.ts";
 import { Editor } from "./Editors";
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 function publicConfigValid() {
-	if (!url || !key) return false;
-	try {
-		const parsed = new URL(url);
-		if (
-			parsed.protocol !== "https:" &&
-			!["localhost", "127.0.0.1"].includes(parsed.hostname)
-		)
-			return false;
-		if (key.startsWith("sb_publishable_")) return true;
-		if (key.split(".").length === 3)
-			return (
-				JSON.parse(
-					atob(key.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-				).role === "anon"
-			);
-	} catch {
-		return false;
-	}
-	return false;
+	return !!serviceUrl(url, import.meta.env.DEV) && publicKey(key);
 }
 export default function CloudPanel({
 	workspace,
@@ -51,14 +36,19 @@ export default function CloudPanel({
 	const [confirmation, setConfirmation] = useState<"upload" | "delete" | null>(
 		null,
 	);
-	const epoch = useRef(0),
+	const epoch = useRef(new CloudEpoch()),
 		activeUser = useRef<string | null>(null),
 		leaveRef = useRef(onLeave);
 	leaveRef.current = onLeave;
+	const workspaceRef = useRef(workspace);
+	workspaceRef.current = workspace;
+	const running = useRef(false);
 	useEffect(() => {
 		if (!publicConfigValid()) return;
 		let cancelled = false,
 			unsubscribe: (() => void) | undefined;
+		let stopRefresh: (() => void) | undefined;
+		let authEvents = 0;
 		void (async () => {
 			try {
 				const { createClient } = await import("@supabase/supabase-js");
@@ -72,12 +62,13 @@ export default function CloudPanel({
 						detectSessionInUrl: true,
 					},
 				});
+				stopRefresh = () => instance.auth.stopAutoRefresh();
 				setClient(instance);
 				const apply = (next: Session | null) => {
 					if (cancelled) return;
 					const id = next?.user.id ?? null;
 					if (activeUser.current !== id) {
-						epoch.current++;
+						epoch.current.next();
 						activeUser.current = id;
 						setRevision(null);
 						setPending(null);
@@ -86,13 +77,15 @@ export default function CloudPanel({
 					}
 					setSession(next);
 				};
-				const { data } = instance.auth.onAuthStateChange((_event, next) =>
-					apply(next),
-				);
+				const { data } = instance.auth.onAuthStateChange((_event, next) => {
+					authEvents++;
+					apply(next);
+				});
 				unsubscribe = () => data.subscription.unsubscribe();
+				const eventsBefore = authEvents;
 				const result = await instance.auth.getSession();
 				if (result.error) throw result.error;
-				apply(result.data.session);
+				if (eventsBefore === authEvents) apply(result.data.session);
 			} catch {
 				if (!cancelled)
 					setError(
@@ -102,11 +95,14 @@ export default function CloudPanel({
 		})();
 		return () => {
 			cancelled = true;
+			epoch.current.next();
+			stopRefresh?.();
 			unsubscribe?.();
 		};
 	}, []);
 	async function api(method: string, body?: unknown) {
 		if (!session) throw Error("Sign in before accessing cloud data.");
+		const requestEpoch = epoch.current.current();
 		const response = await fetch("/api/workspace", {
 			method,
 			headers: {
@@ -116,16 +112,66 @@ export default function CloudPanel({
 			body: body === undefined ? undefined : JSON.stringify(body),
 			signal: AbortSignal.timeout(12000),
 		});
-		const data = await response.json().catch(() => null);
+		const reader = response.body?.getReader();
+		if (!reader) throw Error("Cloud returned an empty response.");
+		const chunks: Uint8Array[] = [];
+		let bytes = 0;
+		try {
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				bytes += value.byteLength;
+				if (bytes > 1_100_000) {
+					await reader.cancel();
+					throw Error("Cloud returned too much data. Your board is unchanged.");
+				}
+				chunks.push(value);
+			}
+		} finally {
+			reader.releaseLock();
+		}
+		const joined = new Uint8Array(bytes);
+		let offset = 0;
+		for (const chunk of chunks) {
+			joined.set(chunk, offset);
+			offset += chunk.length;
+		}
+		let data;
+		try {
+			data = JSON.parse(new TextDecoder().decode(joined));
+		} catch {
+			throw Error("Cloud returned unreadable data. Try again later.");
+		}
+		if (
+			response.status === 401 &&
+			epoch.current.matches(requestEpoch) &&
+			activeUser.current === session.user.id
+		) {
+			epoch.current.next();
+			activeUser.current = null;
+			setSession(null);
+			setRevision(null);
+			setPending(null);
+			setConfirmation(null);
+			leaveRef.current();
+			void client?.auth.signOut({ scope: "local" }).catch(() => {});
+			throw Error(
+				"Your session expired. The local demo was restored. Sign in again to access your account.",
+			);
+		}
 		if (!response.ok)
 			throw Error(
-				data?.error?.message ??
+				(typeof data?.error?.message === "string" &&
+				data.error.message.length < 500
+					? data.error.message
+					: null) ??
 					`Cloud request failed (${response.status}). Local work is unchanged.`,
 			);
 		return data;
 	}
 	async function run(operation: () => Promise<void>) {
-		if (busy) return;
+		if (running.current) return;
+		running.current = true;
 		setBusy(true);
 		setError("");
 		try {
@@ -135,34 +181,53 @@ export default function CloudPanel({
 				e instanceof Error ? e.message : "Cloud request failed. Try again.",
 			);
 		} finally {
+			running.current = false;
 			setBusy(false);
 		}
 	}
 	async function load() {
-		const version = epoch.current,
+		const version = epoch.current.current(),
 			id = session?.user.id;
 		if (!id) return;
 		const data = await api("GET");
-		if (version !== epoch.current) return;
+		if (!epoch.current.matches(version)) return;
 		if (!Number.isSafeInteger(data.revision) || !validWorkspace(data.workspace))
 			throw Error("Cloud data is invalid. Your current board is unchanged.");
 		setRevision(data.revision);
 		setPending({ ...data, owner: id });
 	}
 	async function upload() {
-		const version = epoch.current,
+		const version = epoch.current.current(),
 			id = session?.user.id;
 		if (!id) return;
+		const submitted = workspace;
+		const items: VisionItem[] = [];
+		for (const item of submitted.items) {
+			if (!epoch.current.matches(version)) return;
+			items.push(
+				item.image
+					? { ...item, image: await normalizeImageData(item.image) }
+					: item,
+			);
+		}
+		if (!epoch.current.matches(version)) return;
+		const sanitized = { ...submitted, items };
 		const data = await api("PUT", {
 			expectedRevision: revision ?? 0,
-			workspace,
+			workspace: sanitized,
 		});
-		if (version !== epoch.current) return;
+		if (!epoch.current.matches(version)) return;
 		if (!Number.isSafeInteger(data.revision) || !validWorkspace(data.workspace))
 			throw Error(
 				"Cloud response is invalid. Reload cloud status before retrying.",
 			);
 		setRevision(data.revision);
+		if (!mayReplaceAfterSave(submitted, workspaceRef.current)) {
+			setMessage(
+				"An earlier snapshot was saved. Newer edits remain in memory; save again to include them.",
+			);
+			return;
+		}
 		onLoad(data.workspace, id);
 		setMessage(
 			`Saved to your account at revision ${data.revision}. Account data stays in memory in this tab; it is not copied into the demo browser store.`,
@@ -244,7 +309,7 @@ export default function CloudPanel({
 								void run(async () => {
 									const result = await client!.auth.signOut({ scope: "local" });
 									if (result.error) throw Error("Sign-out failed. Try again.");
-									epoch.current++;
+									epoch.current.next();
 									activeUser.current = null;
 									setSession(null);
 									setRevision(null);
@@ -331,9 +396,9 @@ export default function CloudPanel({
 								void run(async () => {
 									if (action === "upload") await upload();
 									else {
-										const version = epoch.current;
+										const version = epoch.current.current();
 										await api("DELETE", { expectedRevision: revision });
-										if (version !== epoch.current) return;
+										if (!epoch.current.matches(version)) return;
 										setRevision(null);
 										setPending(null);
 										onLeave();

@@ -1,41 +1,64 @@
 # Verification record
 
-October 29, 2026. Tests ran on Windows with Node 24.15.0 and pnpm 11.25.0. No public deployment was performed.
+**October 29, 2026.** Windows x64, Node 24.15.0, pnpm 11.25.0. Current local checks include the scheduling/account foundation and subsequent security remediation. No public deployment or live Supabase project was used.
 
 ## Automated checks
 
-- `pnpm install --frozen-lockfile`: passed after making dependency build-script policy explicit.
-- `npm run typecheck`: passed for the full frontend, including retained prototype modules. Three original Calendar type errors were repaired.
-- `npm test`: seven passing behavior groups covering structured plan generation, schema rejection, unique IDs, weighted complete/reopen progress, deadline capacity, weekly effort bounds/order, persistence round-trip, and corrupt/unavailable/quota storage failures.
-- `npm run build`: production frontend built successfully. The original Vite bundle also built before edits. Bundling continues to report stale Browserslist/baseline-browser-mapping metadata; this is a warning, not a failed check.
-- `npm run audit`: bounded credential-pattern scan prints categories and locations only. No real embedded provider-key/private-key matches found. Original assets were reviewed visually.
-- `git diff --check`: passed.
+| Check | Result and scope |
+| --- | --- |
+| Frozen dependency installation | Passed with the pinned package manager and lockfile. |
+| TypeScript | Full frontend and server checks passed, including retained prototype modules. The original three Calendar type errors were fixed earlier. |
+| Behavior tests | **35 passed**, none skipped. Domain, scheduler, portability, service, SQL and security tests. |
+| Production build | Vite 8 frontend builds successfully, including a separate schedule worker, lazy Supabase SDK chunk and self-hosted fonts. |
+| Package audit | **0 reported vulnerabilities** at the review time. Before remediation the dependency scan reported 60 advisory records, not 60 demonstrated reachable exploits. |
+| Source/history/output scan | No high-confidence credential matches; context email matches were synthetic tests and a historical public dependency contact. Scans emit metadata only. |
+| Source hygiene | git diff --check passed; env/dependencies/output/cache/logs/credential file patterns remain ignored. |
+| HTTP smoke checks | Current local API returns 401 unauthenticated, 405 unsupported method, 403 wrong origin, and 503 unconfigured cloud; all include no-store responses. |
+| Development file access | Actual HTTP requests for root env-example and server source paths returned 403; the intended frontend entry returned 200. |
+| Production delivery | Local preview returned CSP, DENY framing, nosniff, no-referrer and permissions headers. Built HTML adds self-only connect policy when cloud is unconfigured. Vercel delivery itself remains unverified. |
 
-GitHub Actions runs the same typecheck, tests, and build on pushes and pull requests. Local passing results are independent of remote CI status.
+CI runs installation, type checks, tests, build, history/output credential scan and package audit on pushes/PRs. Action revisions are immutable and checkout credentials are not persisted. The latest pushed head's remote conclusion is checked separately; local success alone is not a remote CI claim.
+
+### Test details
+
+- **Planner:** valid templates/sample, unique IDs, date/effort/shape rejection, weighted completion/reopen, rough capacity and ordered weekly focus, storage round-trip and failure preservation.
+- **Scheduler:** deterministic placements, dependencies, competing goals, splitting/breaks, fixed commitments, budget/deadline bounds, unscheduled reasons, cycles, timezone/DST gap/fold handling, manipulated schedule rejection and randomized DAG fixtures.
+- **Portability:** legacy backup compatibility, reviewed format validation, accepted/history persistence, ICS newline injection escaping, UTF-8 folding and stable task-occurrence UIDs.
+- **Cloud services:** derived ownership, two distinct synthetic users, unknown owner fields rejected, stale write/delete rejection, size caps, provider adapter headers/no redirects, malformed replies and rate-limit errors.
+- **PostgreSQL:** PGlite executes the actual SQL migrations against a synthetic auth schema. The migration-001 test records its original owner-read RLS behavior; the combined 001+002 test verifies the current stricter permissions, non-reused revisions and account rate limits. These tests do not validate hosted Supabase configuration.
+- **Security:** strict nested/aggregate data bounds, image signature/pixel limits, service-origin/key guards, malformed history, stale account epochs/save races, chart injection rejection, request/provider bounds, safe HTTP errors, metadata-only credential reporting and account-to-demo write prevention.
 
 ## Browser verification
 
-Used the local Vite app in the in-app browser. Desktop viewport: **1440 × 1000**. Mobile viewport: **390 × 844**. Neither layout had horizontal overflow.
+The production build was exercised in the in-app browser at **1440 × 1000** and **390 × 844** viewport settings. The smaller content width excludes the scrollbar. No horizontal overflow was observed.
 
-Verified through actual controls:
+Checks performed through actual controls during remediation:
 
-1. Create a goal with outcome, deadline, weekly hours, constraints, and color; edit the deadline and confirm the saved card reflects it.
-2. Generate a structured plan; edit a task title and duration; complete it and reload to verify saved progress.
-3. Create and edit inspiration, then reload. Reject an image larger than 1 MB; accept a smaller PNG; verify its image survives reload.
-4. Add a milestone and a task. Complete a checkbox with Space. Remove the test milestone through the confirmation dialog.
-5. Open plan regeneration and cancel it; existing edits remain intact.
-6. Open an editor using a keyboard-accessible button, verify initial field focus, close using Escape, and verify focus returns to the opener.
-7. Open weekly focus and verify the visible tasks fit the edited two-hour budget and preserve plan order.
-8. Start fresh to verify the empty-board flow; reload the sample using the mobile footer.
-9. Export board JSON using the actual download control.
-10. Change a task in a second tab. The original tab displays a conflict warning with separate working/saved export choices; reload recovers the saved version. Restored sample progress after testing.
+1. Add a real work window, save it, run the background worker, inspect a nine-session proposal with explicit unplaced work, and accept it. Only one schedule panel remains after saves.
+2. Download the accepted ICS file; inspect nine events and nine unique UIDs. This does not verify importing it into Google Calendar.
+3. Add a goal containing HTML-like markup. It renders as literal text, creates no corresponding image element, and opens no script dialog. Rename it to a synthetic review goal, generate its starter plan, and inspect editable tasks.
+4. Attempt a cyclic prerequisite edit. The editor stays open, shows an error, and preserves the original board.
+5. Close the editor with Escape and verify focus returns to the opener. Complete a task with Space, reload, and observe persisted weighted progress.
+6. Upload a bounded PNG through the image picker and save an inspiration card using the processing path. Earlier core-flow checks also verified file-size rejection, image reload, goal date editing, milestones, empty states and cross-tab conflict recovery.
+7. Import a valid synthetic JSON backup, review goal/task/item counts, and explicitly replace the temporary review board with the sample. Import a backup with an unknown field; visible validation rejects it and retains the sample.
+8. Inspect mobile board/editor/schedule controls and the restored sample, with no horizontal overflow. Confirm account storage is clearly unavailable when unconfigured.
 
-The final browser error-log query returned no error entries. Screenshots are kept locally under ignored `artifacts/desktop-planner.png` and `artifacts/mobile-planner.png`; browser test data was reset to the sample.
+Scenario comparison, accepted-history persistence and stale-proposal blocking were exercised during the earlier scheduling milestone. The automated suite continues to cover these domain invariants. Keyboard/focus checks and responsive inspection do not constitute a formal WCAG audit or a screen-reader session.
 
-## Verification limits
+A fresh final-build tab is used for the final console-error query, so earlier development errors are not mistaken for current behavior. Browser evidence is saved locally under ignored artifacts/security-verified-desktop.png and artifacts/security-verified-mobile.png. Temporary browser test data was restored to the included sample.
 
-- Storage schema/quota/unavailability are unit-tested with injected storage failures. Browser settings were not changed to force real quota exhaustion or disable storage.
-- No authenticated users exist, so no real user-isolation guarantee or authorization test is claimed.
-- No AI provider, Motoko compiler/runtime, OAuth consent, Google Calendar write, webhook, dependency-aware schedule, or replan is enabled or end-to-end tested.
-- Accessibility checks cover keyboard use, focus, semantics, responsive visual inspection, and reduced-motion CSS. No screen-reader session or formal WCAG audit was performed.
-- Static frontend output is provided for Vercel configuration; hosted routing and deployment are unverified.
+## Performance evidence
+
+npm run benchmark generates valid synthetic DAGs at 100, 300 and 1000 tasks, checks scheduling invariants and records three runs per size. An observed 56-day UTC run had medians around 8ms, 19ms and 34ms respectively; the largest case left work unplaced because availability is finite. Re-run on the target device rather than treating these as guaranteed latencies. Worker startup/clone/UI costs are not included in the Node measurements.
+
+Main-thread imports, schema validation, image preprocessing and synchronous localStorage remain bounded but can still be noticeable on slow devices. Larger real workloads should be measured before adding virtualization, indexed storage or server jobs. No load test of an external service or global denial-of-service protection is claimed.
+
+## Remaining verification limits
+
+- No real OAuth callback, token refresh/expiry, live account switching or hosted two-account session was tested. Async state guards are tested as extracted helpers; live behavior still needs the setup in CLOUD_SETUP.md.
+- Embedded SQL executes actual migrations with synthetic roles; a live provider's gateway, grants, project settings and parallel-request behavior remain to verify.
+- Storage quota/unavailability are tested with injected failures; browser settings were not changed to force real exhaustion.
+- No public Vercel route/function test, external AI request, remote Calendar write, Motoko build/deployment, account deletion or operational backup-recovery process is claimed.
+- Credential patterns and metadata review do not establish absence of every secret, PII format or image content issue. Intentional public author attribution remains.
+
+See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the complete finding/remediation list and prioritized operational plan.

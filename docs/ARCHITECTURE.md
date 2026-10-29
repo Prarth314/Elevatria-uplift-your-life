@@ -1,6 +1,19 @@
 # Architecture decision: isolate the local planning workflow first
 
-## Current decision
+## Implementation update — October 29, 2026
+
+The original decisions below are retained as design context. Scheduling, backup restoration and optional account storage are now implemented:
+
+- The active React/Vite frontend retains a central visual board. Domain validation, templates, dependency handling, image processing, persistence and scheduling live in separate planner modules.
+- A bounded Web Worker runs a deterministic earliest-deadline scheduling heuristic; an independent validator checks placements. Global work windows, fixed commitments, timezone/DST handling, per-goal weekly budgets, deadlines, splitting and breaks constrain proposals. Acceptance and replanning remain explicit user actions; no optimality or minimal-disruption claim is made.
+- The optional same-origin Node/Vercel API verifies a Supabase GitHub-backed identity, derives ownership, and validates every document. One JSONB document per owner permits atomic optimistic replacement while preserving the existing versioned backup format. It trades normalized task queries/asset efficiency for a small, testable initial storage boundary.
+- Both PostgreSQL migrations are required. Migration 002 removes direct browser table access, adds shared per-account operation limits and non-reused revisions. Service credentials are server-only. Local demo documents and in-memory account documents have separate persistence paths.
+- No Supabase project has been connected or verified live. No server AI or remote Google Calendar synchronization is enabled. Current Calendar output is an escaped ICS download with stable occurrence identities; calendar-client behavior remains outside its guarantee.
+- The retained Motoko source is inactive; legacy shell deployment entry points are disabled. This preserves the experiment without making it an unverified runtime requirement.
+
+See [cloud setup](CLOUD_SETUP.md), [security findings](SECURITY_AUDIT.md), and [current verification](VERIFICATION.md). The contracts below describe the original targets; task-level APIs, AI and durable remote Calendar operations are still future work.
+
+## Original decision
 
 Keep the React/Vite application and existing component primitives. Introduce a planner domain and storage boundary. Keep the original Motoko source and generated bindings, but do not initialize Internet Identity or create actors for the local demo. The existing backend has no goal model to preserve, so Milestone 1 does not need a backend migration.
 

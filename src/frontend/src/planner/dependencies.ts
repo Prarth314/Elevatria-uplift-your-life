@@ -17,8 +17,11 @@ export function dependencyErrors(workspace: Workspace): string[] {
 			return [
 				"Dependencies must reference distinct existing tasks and cannot reference the task itself.",
 			];
-		for (const id of t.dependsOn ?? [])
-			children.set(id, [...(children.get(id) ?? []), t.id]);
+		for (const id of t.dependsOn ?? []) {
+			const list = children.get(id);
+			if (list) list.push(t.id);
+			else children.set(id, [t.id]);
+		}
 	}
 	const ready = tasks.filter((t) => !incoming.get(t.id)).map((t) => t.id);
 	let visited = 0;

@@ -1,3 +1,4 @@
+import { prepareImage } from "./images";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
@@ -50,7 +51,7 @@ export function GoalEditor({
 	goal,
 	save,
 	close,
-}: { goal?: Goal; save: (goal: Goal) => void; close: () => void }) {
+}: { goal?: Goal; save: (goal: Goal) => boolean; close: () => void }) {
 	const [draft, setDraft] = useState<Goal>(
 		goal ?? {
 			id: newId(),
@@ -63,12 +64,13 @@ export function GoalEditor({
 			milestones: [],
 		},
 	);
+	const [error, setError] = useState("");
 	const set = <K extends keyof Goal>(key: K, value: Goal[K]) =>
 		setDraft((d) => ({ ...d, [key]: value }));
 	function submit(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const values = new FormData(e.currentTarget);
-		save({
+		const applied = save({
 			...draft,
 			targetDate: String(values.get("targetDate")),
 			weeklyHours: Number(values.get("weeklyHours")),
@@ -76,6 +78,10 @@ export function GoalEditor({
 			description: draft.description.trim(),
 			constraints: draft.constraints.trim(),
 		});
+		if (!applied)
+			setError(
+				"This change is invalid or exceeds a board limit. Your previous board is unchanged.",
+			);
 	}
 	return (
 		<Editor
@@ -84,6 +90,11 @@ export function GoalEditor({
 			close={close}
 		>
 			<form onSubmit={submit} className="editor-form">
+				{error && (
+					<p role="alert" className="error-text">
+						{error}
+					</p>
+				)}
 				<label>
 					Goal title
 					<input
@@ -198,7 +209,7 @@ export function ItemEditor({
 }: {
 	item?: VisionItem;
 	goals: Goal[];
-	save: (item: VisionItem) => void;
+	save: (item: VisionItem) => boolean;
 	close: () => void;
 }) {
 	const [draft, setDraft] = useState<VisionItem>(
@@ -224,16 +235,14 @@ export function ItemEditor({
 		}
 		setReading(true);
 		try {
-			const image = await new Promise<string>((resolve, reject) => {
-				const reader = new FileReader();
-				reader.onload = () => resolve(String(reader.result));
-				reader.onerror = reject;
-				reader.readAsDataURL(file);
-			});
-			if (!safeImage(image)) throw new Error("Invalid image");
+			const image = await prepareImage(file);
 			setDraft((d) => ({ ...d, image }));
-		} catch {
-			setError("This image could not be read. Please try another file.");
+		} catch (error) {
+			setError(
+				error instanceof Error
+					? error.message
+					: "This image could not be read. Please try another file.",
+			);
 		} finally {
 			setReading(false);
 		}
@@ -241,18 +250,22 @@ export function ItemEditor({
 	return (
 		<Editor
 			title={item ? "Edit your inspiration" : "Pin a little inspiration"}
-			description="Keep the reason behind your goal in sight. Images stay on this device."
+			description="Keep the reason behind your goal in sight. Images become part of your board and exported backups."
 			close={close}
 		>
 			<form
 				className="editor-form"
 				onSubmit={(e) => {
 					e.preventDefault();
-					save({
+					const applied = save({
 						...draft,
 						title: draft.title.trim(),
 						content: draft.content.trim(),
 					});
+					if (!applied)
+						setError(
+							"This inspiration is invalid or exceeds a board limit. Reduce the image or note size.",
+						);
 				}}
 			>
 				<label>
@@ -338,9 +351,10 @@ export function TaskEditor({
 }: {
 	allTasks?: Task[];
 	task?: Task;
-	save: (task: Task) => void;
+	save: (task: Task) => boolean;
 	close: () => void;
 }) {
+	const [error, setError] = useState("");
 	const [draft, setDraft] = useState<Task>(
 		task ?? { id: newId(), title: "", minutes: 30, completed: false },
 	);
@@ -350,11 +364,19 @@ export function TaskEditor({
 			description="Make it specific and estimate the focused time it needs."
 			close={close}
 		>
+			{error && (
+				<p role="alert" className="error-text">
+					{error}
+				</p>
+			)}
 			<form
 				className="editor-form"
 				onSubmit={(e) => {
 					e.preventDefault();
-					save({ ...draft, title: draft.title.trim() });
+					if (!save({ ...draft, title: draft.title.trim() }))
+						setError(
+							"This task creates a dependency cycle or exceeds a board limit. Adjust it and try again.",
+						);
 				}}
 			>
 				<label>
@@ -424,19 +446,28 @@ export function TitleEditor({
 	title,
 	save,
 	close,
-}: { title: string; save: (title: string) => void; close: () => void }) {
+}: { title: string; save: (title: string) => boolean; close: () => void }) {
 	const [value, setValue] = useState(title);
+	const [error, setError] = useState("");
 	return (
 		<Editor
 			title={title ? "Edit milestone" : "Add a milestone"}
 			description="A milestone is a meaningful checkpoint along the way."
 			close={close}
 		>
+			{error && (
+				<p role="alert" className="error-text">
+					{error}
+				</p>
+			)}
 			<form
 				className="editor-form"
 				onSubmit={(e) => {
 					e.preventDefault();
-					save(value.trim());
+					if (!save(value.trim()))
+						setError(
+							"This milestone is invalid or exceeds a board limit. Adjust it and try again.",
+						);
 				}}
 			>
 				<label>

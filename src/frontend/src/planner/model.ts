@@ -1,3 +1,12 @@
+import {
+	plain,
+	identifier,
+	boundedText,
+	label,
+	calendarDate,
+	LIMITS,
+} from "./structure.ts";
+import { safeImage } from "./images.ts";
 import type { PlanningState } from "./schedule-types.ts";
 import { validPlanning } from "./schedule-validation.ts";
 import { dependencyErrors } from "./dependencies.ts";
@@ -47,12 +56,8 @@ export function dateAfter(days: number, now = new Date()): string {
 	date.setDate(date.getDate() + days);
 	return localDate(date);
 }
-export function validDate(value: unknown): value is string {
-	if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))
-		return false;
-	const date = new Date(`${value}T12:00:00`);
-	return !Number.isNaN(date.getTime()) && localDate(date) === value;
-}
+export const validDate = calendarDate;
+export { safeImage } from "./images.ts";
 export function progress(goal: Goal) {
 	const tasks = goal.milestones.flatMap((m) => m.tasks);
 	const minutes = tasks.reduce((sum, t) => sum + t.minutes, 0);
@@ -67,40 +72,45 @@ export function progress(goal: Goal) {
 		percent: minutes ? Math.round((doneMinutes / minutes) * 100) : 0,
 	};
 }
-const text = (v: unknown, max = 2000): v is string =>
-	typeof v === "string" && v.length <= max;
-const title = (v: unknown): v is string => text(v, 160) && v.trim().length > 0;
-const record = (v: unknown): v is Record<string, unknown> =>
-	!!v && typeof v === "object" && !Array.isArray(v);
-export const safeImage = (v: unknown): v is string =>
-	text(v, 1_500_000) &&
-	(v === "" ||
-		/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(v));
 export function validWorkspace(value: unknown): value is Workspace {
 	if (
-		!record(value) ||
+		!plain(value, ["version", "goals", "items", "planning"]) ||
 		value.version !== 1 ||
 		!Array.isArray(value.goals) ||
 		!Array.isArray(value.items) ||
 		value.goals.length > 100 ||
-		value.items.length > 100 ||
-		(value.planning !== undefined && !validPlanning(value.planning))
+		value.items.length > 100
 	)
 		return false;
 	const ids = new Set<string>();
-	const unique = (id: unknown) => title(id) && !ids.has(id) && !!ids.add(id);
+	let taskCount = 0,
+		milestoneCount = 0,
+		imageCharacters = 0;
+	const unique = (id: unknown) =>
+		identifier(id) && !ids.has(id) && !!ids.add(id);
 	for (const g of value.goals) {
 		if (
-			!record(g) ||
+			!plain(g, [
+				"id",
+				"title",
+				"description",
+				"targetDate",
+				"weeklyHours",
+				"constraints",
+				"color",
+				"milestones",
+				"priority",
+				"category",
+			]) ||
 			!unique(g.id) ||
-			!title(g.title) ||
-			!text(g.description) ||
-			!validDate(g.targetDate) ||
+			!label(g.title) ||
+			!boundedText(g.description) ||
+			!calendarDate(g.targetDate) ||
 			typeof g.weeklyHours !== "number" ||
 			!Number.isFinite(g.weeklyHours) ||
 			g.weeklyHours < 0.5 ||
 			g.weeklyHours > 80 ||
-			!text(g.constraints) ||
+			!boundedText(g.constraints) ||
 			!["forest", "clay", "lavender"].includes(String(g.color)) ||
 			(g.priority !== undefined && ![1, 2, 3].includes(g.priority as number)) ||
 			(g.category !== undefined &&
@@ -111,20 +121,24 @@ export function validWorkspace(value: unknown): value is Workspace {
 			g.milestones.length > 30
 		)
 			return false;
+		milestoneCount += g.milestones.length;
+		if (milestoneCount > LIMITS.milestones) return false;
 		for (const m of g.milestones) {
 			if (
-				!record(m) ||
+				!plain(m, ["id", "title", "tasks"]) ||
 				!unique(m.id) ||
-				!title(m.title) ||
+				!label(m.title) ||
 				!Array.isArray(m.tasks) ||
 				m.tasks.length > 100
 			)
 				return false;
+			taskCount += m.tasks.length;
+			if (taskCount > LIMITS.tasks) return false;
 			for (const t of m.tasks) {
 				if (
-					!record(t) ||
+					!plain(t, ["id", "title", "minutes", "completed", "dependsOn"]) ||
 					!unique(t.id) ||
-					!title(t.title) ||
+					!label(t.title) ||
 					typeof t.minutes !== "number" ||
 					!Number.isInteger(t.minutes) ||
 					t.minutes < 5 ||
@@ -133,9 +147,7 @@ export function validWorkspace(value: unknown): value is Workspace {
 					(t.dependsOn !== undefined &&
 						(!Array.isArray(t.dependsOn) ||
 							t.dependsOn.length > 20 ||
-							!t.dependsOn.every(
-								(x) => typeof x === "string" && x.length <= 160,
-							)))
+							!t.dependsOn.every(identifier)))
 				)
 					return false;
 			}
@@ -143,14 +155,21 @@ export function validWorkspace(value: unknown): value is Workspace {
 	}
 	if (dependencyErrors(value as unknown as Workspace).length) return false;
 	const goalIds = new Set(value.goals.map((g) => g.id));
-	return value.items.every(
-		(i) =>
-			record(i) &&
-			unique(i.id) &&
-			title(i.title) &&
-			text(i.content) &&
-			safeImage(i.image) &&
-			text(i.goalId, 160) &&
-			(i.goalId === "" || goalIds.has(i.goalId)),
-	);
+	for (const i of value.items) {
+		if (
+			!plain(i, ["id", "title", "content", "image", "goalId"]) ||
+			!unique(i.id) ||
+			!label(i.title) ||
+			!boundedText(i.content) ||
+			typeof i.image !== "string" ||
+			i.image.length > LIMITS.imageCharacters ||
+			typeof i.goalId !== "string" ||
+			(i.goalId !== "" && !goalIds.has(i.goalId))
+		)
+			return false;
+		imageCharacters += i.image.length;
+		if (imageCharacters > LIMITS.allImageCharacters || !safeImage(i.image))
+			return false;
+	}
+	return value.planning === undefined || validPlanning(value.planning);
 }

@@ -149,7 +149,9 @@ test("cloud mutations reject absent authentication, malformed plans, stale write
 			),
 		status(409),
 	);
-	workspace.items[0].image = "data:image/png;base64," + "A".repeat(1_050_000);
+	workspace.items[0].image =
+		"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZrYcAAAAASUVORK5CYII" +
+		"A".repeat(1_050_001);
 	await assert.rejects(
 		() =>
 			workspaceRequest(
@@ -176,7 +178,10 @@ test("Supabase adapter uses verified IDs and privileged headers only on the serv
 	const fetcher = async (url: string | URL | Request, init?: RequestInit) => {
 		calls.push({ url: String(url), init });
 		if (String(url).endsWith("/auth/v1/user"))
-			return Response.json({ id: "11111111-1111-4111-8111-111111111111" });
+			return Response.json({
+				id: "11111111-1111-4111-8111-111111111111",
+				app_metadata: { providers: ["github"] },
+			});
 		return Response.json([]);
 	};
 	const deps = supabaseDependencies(
@@ -191,9 +196,7 @@ test("Supabase adapter uses verified IDs and privileged headers only on the serv
 		() => workspaceRequest({ method: "GET", token: "valid" }, deps),
 		status(404),
 	);
-	assert.ok(
-		calls[1].url.includes("owner_id=eq.11111111-1111-4111-8111-111111111111"),
-	);
+	assert.ok(calls[1].url.endsWith("/rest/v1/rpc/read_workspace"));
 	assert.equal(
 		(calls[0].init?.headers as Record<string, string>).apikey,
 		"test-public",
@@ -202,6 +205,7 @@ test("Supabase adapter uses verified IDs and privileged headers only on the serv
 		(calls[1].init?.headers as Record<string, string>).apikey,
 		"sb_secret_test",
 	);
+	assert.ok(calls.every((call) => call.init?.redirect === "error"));
 	const down = supabaseDependencies(
 		{
 			url: "https://example.supabase.co",
@@ -216,4 +220,48 @@ test("Supabase adapter uses verified IDs and privileged headers only on the serv
 		() => workspaceRequest({ method: "GET", token: "valid" }, down),
 		status(503),
 	);
+});
+
+test("Supabase adapter rejects anonymous/non-GitHub identities, malformed replies, and shared rate-limit errors", async () => {
+	const config = {
+		url: "https://example.supabase.co",
+		publishableKey: "test-public",
+		secretKey: "test-secret",
+	};
+	for (const identity of [
+		null,
+		{},
+		{ id: "bad", app_metadata: { providers: ["github"] } },
+		{
+			id: "11111111-1111-4111-8111-111111111111",
+			is_anonymous: true,
+			app_metadata: { providers: ["github"] },
+		},
+		{
+			id: "11111111-1111-4111-8111-111111111111",
+			app_metadata: { providers: ["email"] },
+		},
+	]) {
+		const deps = supabaseDependencies(config, (async () =>
+			Response.json(identity)) as typeof fetch);
+		assert.equal(await deps.authenticate("synthetic-token"), null);
+	}
+	const board = sampleWorkspace();
+	const malformed = supabaseDependencies(config, (async () =>
+		Response.json({ unexpected: "object" })) as typeof fetch);
+	await assert.rejects(() => malformed.repository.read("owner"), status(502));
+	await assert.rejects(
+		() => malformed.repository.write("owner", 0, board),
+		status(502),
+	);
+	await assert.rejects(
+		() => malformed.repository.remove("owner", 1),
+		status(502),
+	);
+	const throttled = supabaseDependencies(config, (async () =>
+		Response.json(
+			{ message: "RATE_LIMITED" },
+			{ status: 400 },
+		)) as typeof fetch);
+	await assert.rejects(() => throttled.repository.read("owner"), status(429));
 });

@@ -1,3 +1,4 @@
+import { validPlanning } from "./schedule-validation.ts";
 import type { Workspace } from "./model.ts";
 import type {
 	ScheduleSettings,
@@ -222,18 +223,20 @@ export function scheduleViolations(
 	settings: ScheduleSettings,
 	schedule: Schedule,
 ): string[] {
+	if (!validPlanning({ settings, accepted: schedule, history: [] }))
+		return ["Schedule data is invalid or exceeds supported limits."];
 	const errors: string[] = [];
 	const tasks = workspace.goals.flatMap((g) =>
 		g.milestones.flatMap((m) => m.tasks.map((t) => ({ ...t, goal: g }))),
 	);
 	const byId = new Map(tasks.map((t) => [t.id, t])),
 		effort = new Map<string, number>(),
-		weekly = new Map<string, number>();
+		weekly = new Map<string, number>(),
+		grouped = new Map<string, Session[]>();
 	const { slots } = availableSlots(settings, Date.parse(schedule.createdAt));
 	const sessions = [...schedule.sessions].sort((a, b) =>
 		a.start.localeCompare(b.start),
 	);
-	const seen = new Set<string>();
 	for (let i = 0; i < sessions.length; i++) {
 		const s = sessions[i],
 			t = byId.get(s.taskId),
@@ -244,8 +247,6 @@ export function scheduleViolations(
 			errors.push("Session references missing or completed work.");
 			continue;
 		}
-		if (seen.has(s.id)) errors.push("Duplicate session ID.");
-		seen.add(s.id);
 		if (
 			!Number.isInteger(duration) ||
 			duration <= 0 ||
@@ -263,23 +264,34 @@ export function scheduleViolations(
 		if (dateAt(end - 1, settings.timezone) > t.goal.targetDate)
 			errors.push("Session exceeds its deadline.");
 		effort.set(t.id, (effort.get(t.id) ?? 0) + duration);
-		const key = `${t.goal.id}:${weekOf(dateAt(start, settings.timezone))}`;
+		const group = grouped.get(t.id);
+		if (group) group.push(s);
+		else grouped.set(t.id, [s]);
+		const key = t.goal.id + ":" + weekOf(dateAt(start, settings.timezone));
 		weekly.set(key, (weekly.get(key) ?? 0) + duration);
 		if (weekly.get(key)! > t.goal.weeklyHours * 60)
 			errors.push("Goal weekly budget exceeded.");
 	}
+	const remainders = new Map(
+		schedule.unscheduled.map((t) => [t.taskId, t.remainingMinutes]),
+	);
+	for (const x of schedule.unscheduled)
+		if (!byId.has(x.taskId) || byId.get(x.taskId)?.completed)
+			errors.push("Unscheduled work references missing or completed tasks.");
 	for (const t of tasks) {
-		if ((effort.get(t.id) ?? 0) > t.minutes) errors.push("Task overallocated.");
-		const first = sessions.find((s) => s.taskId === t.id);
+		const allocated = effort.get(t.id) ?? 0;
+		if (!t.completed && allocated + (remainders.get(t.id) ?? 0) !== t.minutes)
+			errors.push("Task effort is missing or overallocated.");
+		const first = grouped.get(t.id)?.[0];
 		if (first)
 			for (const id of t.dependsOn ?? []) {
-				const parent = byId.get(id);
-				const parentSessions = sessions.filter((s) => s.taskId === id);
+				const parent = byId.get(id),
+					parentSessions = grouped.get(id);
 				if (
 					!parent ||
 					(!parent.completed &&
 						((effort.get(id) ?? 0) !== parent.minutes ||
-							!parentSessions.length ||
+							!parentSessions?.length ||
 							Date.parse(parentSessions[parentSessions.length - 1].end) >
 								Date.parse(first.start)))
 				)
@@ -289,24 +301,31 @@ export function scheduleViolations(
 	return [...new Set(errors)];
 }
 export function scheduleDiff(previous: Schedule | undefined, next: Schedule) {
-	const ids = new Set([
-		...(previous?.sessions ?? []).map((s) => s.taskId),
-		...next.sessions.map((s) => s.taskId),
-	]);
-	return [...ids].flatMap((taskId) => {
-		const before = (previous?.sessions ?? []).filter(
-				(s) => s.taskId === taskId,
-			),
-			after = next.sessions.filter((s) => s.taskId === taskId);
-		return JSON.stringify(before) === JSON.stringify(after)
-			? []
-			: [
-					{
-						taskId,
-						title: after[0]?.title ?? before[0]?.title ?? taskId,
-						before,
-						after,
-					},
-				];
-	});
+	const group = (sessions: Session[]) => {
+		const map = new Map<string, Session[]>();
+		for (const s of sessions) {
+			const list = map.get(s.taskId);
+			if (list) list.push(s);
+			else map.set(s.taskId, [s]);
+		}
+		return map;
+	};
+	const beforeMap = group(previous?.sessions ?? []),
+		afterMap = group(next.sessions);
+	return [...new Set([...beforeMap.keys(), ...afterMap.keys()])].flatMap(
+		(taskId) => {
+			const before = beforeMap.get(taskId) ?? [],
+				after = afterMap.get(taskId) ?? [];
+			return JSON.stringify(before) === JSON.stringify(after)
+				? []
+				: [
+						{
+							taskId,
+							title: after[0]?.title ?? before[0]?.title ?? taskId,
+							before,
+							after,
+						},
+					];
+		},
+	);
 }

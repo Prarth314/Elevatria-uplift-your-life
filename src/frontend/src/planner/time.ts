@@ -1,5 +1,7 @@
 const formatters = new Map<string, Intl.DateTimeFormat>();
-export function validTimezone(value: string): boolean {
+export function validTimezone(value: unknown): boolean {
+	if (typeof value !== "string" || value.length > 100 || !value.trim())
+		return false;
 	try {
 		new Intl.DateTimeFormat("en", { timeZone: value }).format();
 		return true;
@@ -20,6 +22,8 @@ export function partsAt(instant: number, timezone: string) {
 			second: "2-digit",
 			hourCycle: "h23",
 		});
+		if (formatters.size >= 32)
+			formatters.delete(formatters.keys().next().value!);
 		formatters.set(timezone, formatter);
 	}
 	return Object.fromEntries(

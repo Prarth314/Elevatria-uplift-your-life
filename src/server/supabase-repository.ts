@@ -1,3 +1,8 @@
+import {
+	serviceUrl,
+	publicKey,
+} from "../frontend/src/planner/service-config.ts";
+import { limitedJson } from "./security.ts";
 import { ApiError } from "./workspace-service.ts";
 import type {
 	CloudDocument,
@@ -17,17 +22,9 @@ export function cloudConfig(): ServerConfig | null {
 		process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 	const secretKey = process.env.SUPABASE_SECRET_KEY;
 	if (!url || !publishableKey || !secretKey) return null;
-	try {
-		const parsed = new URL(url);
-		if (
-			parsed.protocol !== "https:" &&
-			!["localhost", "127.0.0.1"].includes(parsed.hostname)
-		)
-			return null;
-	} catch {
-		return null;
-	}
-	return { url: url.replace(/\/$/, ""), publishableKey, secretKey };
+	const origin = serviceUrl(url, process.env.NODE_ENV !== "production");
+	if (!origin || !publicKey(publishableKey)) return null;
+	return { url: origin, publishableKey, secretKey };
 }
 export function supabaseDependencies(
 	config: ServerConfig,
@@ -45,6 +42,7 @@ export function supabaseDependencies(
 		try {
 			response = await fetcher(`${config.url}${path}`, {
 				...init,
+				redirect: "error",
 				headers,
 				signal: AbortSignal.timeout(8000),
 			});
@@ -55,13 +53,23 @@ export function supabaseDependencies(
 				"Cloud storage is unreachable. Local work has not been replaced.",
 			);
 		}
-		if (!response.ok)
+		if (!response.ok) {
+			const problem = (await limitedJson(response, 16384).catch(
+				() => null,
+			)) as { message?: unknown } | null;
+			if (problem?.message === "RATE_LIMITED")
+				throw new ApiError(
+					429,
+					"RATE_LIMITED",
+					"Too many cloud requests. Wait one minute and retry.",
+				);
 			throw new ApiError(
 				503,
 				"CLOUD_UNAVAILABLE",
 				"Cloud storage is unavailable or its migration is missing. Retry later.",
 			);
-		return response.json();
+		}
+		return limitedJson(response);
 	}
 	function document(value: unknown): CloudDocument {
 		const row = value as { revision: unknown; document: unknown };
@@ -80,10 +88,17 @@ export function supabaseDependencies(
 	}
 	const repository: WorkspaceRepository = {
 		async read(ownerId) {
-			const rows = await call(
-				`/rest/v1/workspaces?owner_id=eq.${encodeURIComponent(ownerId)}&select=revision,document&limit=1`,
-			);
-			return Array.isArray(rows) && rows[0] ? document(rows[0]) : null;
+			const rows = await call("/rest/v1/rpc/read_workspace", {
+				method: "POST",
+				body: JSON.stringify({ p_owner: ownerId }),
+			});
+			if (!Array.isArray(rows) || rows.length > 1)
+				throw new ApiError(
+					502,
+					"INVALID_CLOUD_DATA",
+					"Cloud response could not be validated.",
+				);
+			return rows[0] ? document(rows[0]) : null;
 		},
 		async write(ownerId, revision, workspace: Workspace) {
 			const rows = await call("/rest/v1/rpc/save_workspace", {
@@ -94,14 +109,26 @@ export function supabaseDependencies(
 					p_document: workspace,
 				}),
 			});
-			return Array.isArray(rows) && rows[0] ? document(rows[0]) : null;
+			if (!Array.isArray(rows) || rows.length > 1)
+				throw new ApiError(
+					502,
+					"INVALID_CLOUD_DATA",
+					"Cloud response could not be validated.",
+				);
+			return rows[0] ? document(rows[0]) : null;
 		},
 		async remove(ownerId, revision) {
 			const result = await call("/rest/v1/rpc/delete_workspace", {
 				method: "POST",
 				body: JSON.stringify({ p_owner: ownerId, p_revision: revision }),
 			});
-			return result === true;
+			if (typeof result !== "boolean")
+				throw new ApiError(
+					502,
+					"INVALID_CLOUD_DATA",
+					"Cloud response could not be validated.",
+				);
+			return result;
 		},
 	};
 	return {
@@ -110,6 +137,7 @@ export function supabaseDependencies(
 			let response: Response;
 			try {
 				response = await fetcher(`${config.url}/auth/v1/user`, {
+					redirect: "error",
 					headers: {
 						apikey: config.publishableKey,
 						Authorization: `Bearer ${token}`,
@@ -123,15 +151,35 @@ export function supabaseDependencies(
 					"Identity verification is unavailable. Try again later.",
 				);
 			}
-			if (response.status === 401 || response.status === 403) return null;
-			if (!response.ok)
+			if (response.status === 401 || response.status === 403) {
+				await response.body?.cancel();
+				return null;
+			}
+			if (!response.ok) {
+				await response.body?.cancel();
 				throw new ApiError(
 					503,
 					"AUTH_UNAVAILABLE",
 					"Identity verification is unavailable.",
 				);
-			const user = (await response.json()) as { id?: unknown };
-			return typeof user.id === "string" && /^[0-9a-f-]{36}$/i.test(user.id)
+			}
+			const user = (await limitedJson(response, 65536)) as {
+				id?: unknown;
+				is_anonymous?: unknown;
+				app_metadata?: { providers?: unknown };
+			};
+			if (
+				!user ||
+				typeof user !== "object" ||
+				user.is_anonymous === true ||
+				!Array.isArray(user.app_metadata?.providers) ||
+				!user.app_metadata.providers.includes("github")
+			)
+				return null;
+			return typeof user.id === "string" &&
+				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+					user.id,
+				)
 				? user.id
 				: null;
 		},

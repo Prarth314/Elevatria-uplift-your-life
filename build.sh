@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Retired prototype workflow: cannot provision or deploy unreviewed legacy services.
+echo "This legacy workflow is disabled. Use the documented frontend/API setup." >&2
+exit 1
 set -e
 
 CALM_MOC_PATH="/home/ubuntu/.motoko/moc/0.16.3-implicits-26/bin/moc"

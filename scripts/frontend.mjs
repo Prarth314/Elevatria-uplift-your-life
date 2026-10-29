@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { copyFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const cwd = fileURLToPath(new URL("src/frontend/", root));
 const [command, ...args] = process.argv.slice(2);
@@ -25,11 +24,4 @@ child.on("error", (error) => {
 	console.error(error.message);
 	process.exitCode = 1;
 });
-child.on("exit", async (code) => {
-	if (code === 0 && command === "build")
-		await copyFile(
-			new URL("src/frontend/env.json", root),
-			new URL("src/frontend/dist/env.json", root),
-		);
-	process.exitCode = code ?? 1;
-});
+child.on("exit", code => { process.exitCode=code??1; });

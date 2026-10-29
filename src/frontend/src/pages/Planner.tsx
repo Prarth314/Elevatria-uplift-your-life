@@ -1,8 +1,9 @@
+import { clearImageCache } from "../planner/images";
 import CloudPanel from "../planner/CloudPanel";
 import { SchedulePanel } from "../planner/SchedulePanel";
 import { BackupTools } from "../planner/BackupTools";
 import { dependencyErrors } from "../planner/dependencies";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
 	ArrowDown,
 	ArrowUpRight,
@@ -30,7 +31,7 @@ import { localDate, newId, progress, validWorkspace } from "../planner/model";
 import type { Goal, Task, Workspace, VisionItem } from "../planner/model";
 import {
 	loadWorkspace,
-	saveWorkspace,
+	saveLocalWorkspace,
 	WORKSPACE_KEY,
 } from "../planner/persistence";
 import { capacity, generatePlan, weeklyFocus } from "../planner/planning";
@@ -82,6 +83,10 @@ export default function Planner() {
 		() => workspace.goals[0]?.id ?? "",
 	);
 	const [cloudOwner, setCloudOwner] = useState<string | null>(null);
+	const ownerRef = useRef(cloudOwner);
+	ownerRef.current = cloudOwner;
+	const saveLocal = (next: Workspace) =>
+		saveLocalWorkspace(browserStorage, next, ownerRef.current);
 	const [editing, setEditing] = useState<Editing>(null);
 	const [saveError, setSaveError] = useState(
 		initial.status === "error" ? initial.message : "",
@@ -96,43 +101,44 @@ export default function Planner() {
 	const close = () => setEditing(null);
 
 	function persist(next: Workspace, message = "Changes saved on this device.") {
-		const graphErrors = dependencyErrors(next);
-		if (graphErrors.length) {
-			setSaveError(graphErrors.join(" "));
-			return;
-		}
 		if (!validWorkspace(next)) {
 			setSaveError(
-				"This change exceeds a board limit or contains invalid data. Your previous board is unchanged.",
+				"This change has invalid data, a dependency cycle, or exceeds a board limit. Your previous board is unchanged.",
 			);
-			return;
+			return false;
 		}
 		setWorkspace(next);
 		if (cloudOwner) {
 			setNotice(
 				"Account changes are in memory. Use Save cloud board to persist them.",
 			);
-			return;
+			return true;
 		}
 		if (blocked) {
 			setNotice("Changes are in memory only. Export your board to keep them.");
-			return;
+			return true;
 		}
-		const error = saveWorkspace(browserStorage, next);
+		const error = saveLocal(next);
 		setSaveError(error ?? "");
 		setNotice(error ? "Changes are in memory only." : message);
+		return true;
 	}
 	useEffect(() => {
 		// Remove the old prototype's browser-stored provider key without reading it.
 		try {
 			localStorage.removeItem("elevatria_openai_key");
+			localStorage.removeItem("glowup_auth_table");
+			sessionStorage.removeItem("glowup_session");
+			sessionStorage.removeItem("glowup_tier");
 		} catch {
 			/* Storage status is shown separately. */
 		}
-		if (initial.status === "empty")
-			setSaveError(saveWorkspace(browserStorage, workspace) ?? "");
+		if (initial.status === "empty") setSaveError(saveLocal(workspace) ?? "");
 		function externalChange(event: StorageEvent) {
-			if (event.key === WORKSPACE_KEY || event.key === null) {
+			if (
+				!ownerRef.current &&
+				(event.key === WORKSPACE_KEY || event.key === null)
+			) {
 				setBlocked(true);
 				setSaveError(
 					"This board changed in another tab. Export any unsaved work, then reload to use the latest saved board.",
@@ -145,7 +151,7 @@ export default function Planner() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 	function updateGoal(next: Goal, message?: string) {
-		persist(
+		return persist(
 			{
 				...workspace,
 				goals: workspace.goals.map((g) => (g.id === next.id ? next : g)),
@@ -155,23 +161,27 @@ export default function Planner() {
 	}
 	function saveGoal(next: Goal) {
 		const exists = workspace.goals.some((g) => g.id === next.id);
-		persist({
+		const applied = persist({
 			...workspace,
 			goals: exists
 				? workspace.goals.map((g) => (g.id === next.id ? next : g))
 				: [...workspace.goals, next],
 		});
+		if (!applied) return false;
 		setSelectedId(next.id);
 		close();
+		return true;
 	}
 	function saveItem(next: VisionItem) {
-		persist({
+		const applied = persist({
 			...workspace,
 			items: workspace.items.some((i) => i.id === next.id)
 				? workspace.items.map((i) => (i.id === next.id ? next : i))
 				: [...workspace.items, next],
 		});
+		if (!applied) return false;
 		close();
+		return true;
 	}
 	function confirm(
 		title: string,
@@ -246,6 +256,7 @@ export default function Planner() {
 		else run();
 	}
 	function restoreDemo() {
+		clearImageCache();
 		const result = loadWorkspace(browserStorage);
 		const next =
 			result.status === "ready" ? result.workspace : sampleWorkspace();
@@ -283,7 +294,7 @@ export default function Planner() {
 					);
 					return;
 				}
-				const error = saveWorkspace(browserStorage, next);
+				const error = saveLocal(next);
 				setSaveError(error ?? "");
 				setNotice(
 					error ? "Board is in memory only." : "Board saved on this device.",
@@ -451,10 +462,10 @@ export default function Planner() {
 						<div className="storage-alert" role="alert">
 							<p>{saveError}</p>
 							<div>
-								{!blocked && (
+								{!blocked && !cloudOwner && (
 									<button
 										onClick={() => {
-											const error = saveWorkspace(browserStorage, workspace);
+											const error = saveLocal(workspace);
 											setSaveError(error ?? "");
 										}}
 									>
@@ -894,8 +905,8 @@ export default function Planner() {
 												? "Your remaining estimate exceeds the time available before your target. Reduce scope, add time, or move the target date."
 												: `${estimate.weeks} ${estimate.weeks === 1 ? "week" : "weeks"} of focused effort at your current pace.`}
 											<small>
-												Rough capacity estimate. Specific days, dependencies,
-												and automatic scheduling come next.
+												Rough capacity estimate. Review actual availability and
+												dependencies in Schedule & replan.
 											</small>
 										</p>
 									)}
@@ -937,7 +948,7 @@ export default function Planner() {
 						</section>
 					)}
 					<SchedulePanel
-						key={cloudOwner ?? "demo"}
+						key={`schedule:${cloudOwner ?? "demo"}`}
 						workspace={workspace}
 						save={persist}
 					/>
@@ -947,10 +958,12 @@ export default function Planner() {
 						onLoad={openCloud}
 						onLeave={restoreDemo}
 					/>
-					<BackupTools save={persist} />
+					<BackupTools key={`backup:${cloudOwner ?? "demo"}`} save={persist} />
 					<div className="mobile-board-actions">
 						<span>
-							Local demo · Saved in this browser. No account or cloud sync.
+							{cloudOwner
+								? "Account board · Save cloud changes explicitly."
+								: "Local demo · Saved in this browser. No account or cloud sync."}
 						</span>
 						<div>
 							<button onClick={exportBoard}>Export board</button>
@@ -988,7 +1001,7 @@ export default function Planner() {
 					task={editing.task}
 					close={close}
 					save={(task) => {
-						updateGoal({
+						const applied = updateGoal({
 							...goal,
 							milestones: goal.milestones.map((m) =>
 								m.id === editing.milestoneId
@@ -1001,7 +1014,9 @@ export default function Planner() {
 									: m,
 							),
 						});
+						if (!applied) return false;
 						close();
+						return true;
 					}}
 				/>
 			)}
@@ -1010,7 +1025,7 @@ export default function Planner() {
 					title={editing.title}
 					close={close}
 					save={(title) => {
-						updateGoal({
+						const applied = updateGoal({
 							...goal,
 							milestones: editing.id
 								? goal.milestones.map((m) =>
@@ -1018,7 +1033,9 @@ export default function Planner() {
 									)
 								: [...goal.milestones, { id: newId(), title, tasks: [] }],
 						});
+						if (!applied) return false;
 						close();
+						return true;
 					}}
 				/>
 			)}

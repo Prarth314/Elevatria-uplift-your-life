@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { computeSchedule } from "./worker-client";
+import { useEffect, useState, useRef, useMemo } from "react";
 import type { Workspace } from "./model.ts";
 import { newId, localDate } from "./model.ts";
 import { defaultSettings } from "./schedule-types.ts";
 import type { Schedule, ScheduleSettings } from "./schedule-types.ts";
 import {
-	generateSchedule,
 	inputRevision,
 	scheduleDiff,
 	scheduleViolations,
@@ -33,7 +33,7 @@ export function SchedulePanel({
 	save,
 }: {
 	workspace: Workspace;
-	save: (workspace: Workspace, message?: string) => void;
+	save: (workspace: Workspace, message?: string) => boolean;
 }) {
 	const [settings, setSettings] = useState<ScheduleSettings>(
 		() => workspace.planning?.settings ?? defaultSettings(),
@@ -43,13 +43,19 @@ export function SchedulePanel({
 	const [scenarioKind, setScenarioKind] = useState("half");
 	const [error, setError] = useState("");
 	const [message, setMessage] = useState("");
+	const [computing, setComputing] = useState(false);
+	const computation = useRef<AbortController | null>(null);
+	useEffect(() => () => computation.current?.abort(), []);
 	useEffect(() => {
 		setSettings(workspace.planning?.settings ?? defaultSettings());
 		setProposal(null);
 		setScenario(null);
 	}, [workspace.planning?.settings]);
 	const accepted = workspace.planning?.accepted;
-	const revision = inputRevision(workspace, settings);
+	const revision = useMemo(
+		() => inputRevision(workspace, settings),
+		[workspace.goals, settings],
+	);
 	const stale = !!accepted && accepted.inputRevision !== revision;
 	const dirty =
 		JSON.stringify(settings) !==
@@ -66,7 +72,7 @@ export function SchedulePanel({
 			setError(errors.join(" "));
 			return;
 		}
-		save(
+		const applied = save(
 			{
 				...workspace,
 				planning: {
@@ -77,21 +83,34 @@ export function SchedulePanel({
 			},
 			"Availability saved. Review a new schedule before replacing accepted sessions.",
 		);
+		if (!applied) {
+			setError("Availability could not be applied. Review the board warning.");
+			return;
+		}
 		setError("");
 		setMessage(
-			"Availability saved. Existing accepted sessions remain unchanged.",
+			"Availability applied. Check the workspace save status; existing sessions remain unchanged.",
 		);
 	}
-	function generate() {
+	async function generate() {
+		if (computation.current) return;
+		const controller = new AbortController();
+		computation.current = controller;
+		setComputing(true);
 		try {
 			if (dirty) throw Error("Save availability before generating a proposal.");
-			setProposal(generateSchedule(workspace, settings));
+			setProposal(
+				await computeSchedule(workspace, settings, controller.signal),
+			);
 			setError("");
 			setMessage("Proposal generated. Your accepted schedule has not changed.");
 		} catch (e) {
 			setError(
 				e instanceof Error ? e.message : "Scheduling failed. Try again.",
 			);
+		} finally {
+			if (computation.current === controller) computation.current = null;
+			setComputing(false);
 		}
 	}
 	function accept() {
@@ -110,7 +129,7 @@ export function SchedulePanel({
 				);
 			const errors = scheduleViolations(workspace, settings, proposal);
 			if (errors.length) throw Error(errors.join(" "));
-			save(
+			const applied = save(
 				{
 					...workspace,
 					planning: {
@@ -124,14 +143,24 @@ export function SchedulePanel({
 				},
 				"Schedule accepted. Previous accepted versions remain in history.",
 			);
+			if (!applied)
+				throw Error(
+					"The schedule exceeds board or history limits. Your previous schedule is unchanged.",
+				);
 			setProposal(null);
 			setError("");
-			setMessage("Schedule accepted and saved on this device.");
+			setMessage(
+				"Schedule accepted. Check the workspace save status to confirm persistence.",
+			);
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "Could not accept schedule.");
 		}
 	}
-	function compare() {
+	async function compare() {
+		if (computation.current) return;
+		const controller = new AbortController();
+		computation.current = controller;
+		setComputing(true);
 		try {
 			if (dirty) throw Error("Save availability before comparing scenarios.");
 			const variant: Workspace = {
@@ -142,7 +171,7 @@ export function SchedulePanel({
 						: { ...g, targetDate: addDays(g.targetDate, 7) },
 				),
 			};
-			setScenario(generateSchedule(variant, settings));
+			setScenario(await computeSchedule(variant, settings, controller.signal));
 			setError("");
 			setMessage(
 				"Scenario only. Goals, dates, and accepted sessions remain unchanged.",
@@ -151,6 +180,9 @@ export function SchedulePanel({
 			setError(
 				e instanceof Error ? e.message : "Scenario could not be computed.",
 			);
+		} finally {
+			if (computation.current === controller) computation.current = null;
+			setComputing(false);
 		}
 	}
 	function exportCalendar() {
@@ -568,8 +600,23 @@ export function SchedulePanel({
 			<p className="field-help" role="status">
 				{message}
 			</p>
+			{computing && (
+				<p role="status">
+					Scheduling in the background…{" "}
+					<button
+						className="quiet-button"
+						onClick={() => computation.current?.abort()}
+					>
+						Cancel calculation
+					</button>
+				</p>
+			)}
 			<div className="schedule-actions">
-				<button className="primary-button" onClick={generate}>
+				<button
+					className="primary-button"
+					disabled={computing}
+					onClick={generate}
+				>
 					{accepted ? "Propose replan from now" : "Generate schedule proposal"}
 				</button>
 				<button
@@ -660,7 +707,7 @@ export function SchedulePanel({
 						</option>
 					</select>
 				</label>
-				<button className="quiet-button" onClick={compare}>
+				<button className="quiet-button" disabled={computing} onClick={compare}>
 					Compare scenario
 				</button>
 				{scenario && (

@@ -133,7 +133,7 @@ test("persistence round-trips edits, completion and images in the dedicated demo
 	assert.deepEqual(loadWorkspace(storage), { status: "empty" });
 	const workspace = sampleWorkspace();
 	workspace.goals[0].title = "Edited goal";
-	workspace.items[0].image = "data:image/png;base64,AA==";
+	workspace.items[0].image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZrYcAAAAASUVORK5CYII=";
 	workspace.goals[0].milestones[0].tasks[2].completed = true;
 	assert.equal(saveWorkspace(storage, workspace), null);
 	assert.deepEqual(loadWorkspace(storage), { status: "ready", workspace });

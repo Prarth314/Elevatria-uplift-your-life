@@ -6,7 +6,7 @@
 
 **A thoughtful space for big dreams and small, steady steps.**
 
-Turn a vision board into editable milestones, manageable tasks, and meaningful progress.
+Vision board → editable plans → realistic schedules → progress → reviewed replanning.
 
 [![Verify frontend](https://github.com/Prarth314/Elevatria-uplift-your-life/actions/workflows/ci.yml/badge.svg)](https://github.com/Prarth314/Elevatria-uplift-your-life/actions/workflows/ci.yml)
 ![React 19](https://img.shields.io/badge/React-19-365844?style=flat-square)
@@ -14,7 +14,7 @@ Turn a vision board into editable milestones, manageable tasks, and meaningful p
 ![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-73865f?style=flat-square)
 [![MIT License](https://img.shields.io/badge/License-MIT-a18b65?style=flat-square)](LICENSE)
 
-[Explore the workflow](#the-workflow) · [Run locally](#quick-start) · [Architecture](#under-the-surface) · [Roadmap](#where-elevatria-is-going)
+[Explore the workflow](#the-workflow) · [Run locally](#quick-start) · [Architecture](#under-the-surface) · [Security](docs/SECURITY_AUDIT.md)
 
 </div>
 
@@ -22,14 +22,12 @@ Turn a vision board into editable milestones, manageable tasks, and meaningful p
 
 ## Make room for what’s next
 
-Elevatria is a visual goal-planning application built around a simple idea: the future you imagine deserves a practical next step.
+Elevatria is a visual goal-planning application built around a simple idea: the future you imagine deserves a practical next step. Keep inspiration in sight, define success, shape milestones and tasks, then work within the time you actually have.
 
-Keep your inspiration in sight, define what success looks like, break a goal into milestones, and track the work as it happens. The experience pairs a botanical palette and editorial typography with clear editing interactions, realistic effort estimates, and room to change direction.
+The botanical palette, editorial typography, and central vision board support a technical core: validated data, dependency graphs, timezone-aware scheduling, reviewed schedule changes, and optional ownership-checked cloud storage.
 
-The project focuses on maintainable architecture, reliable planning behavior, and a future AI-assisted workflow.
-
-> **Current release · Milestone 1**<br />
-> A working local demo with browser persistence and template-based plan generation. No signup, AI key, backend setup, or paid service is required. Authentication, server AI, automatic scheduling, and Calendar sync are planned, not active features.
+> **Current release · Local planning, scheduling & security hardening**<br />
+> The complete local workflow runs without signup, an API key, or a paid service. Optional Supabase account integration is implemented and locally tested, but no live project or OAuth flow has been verified. AI generation and Google Calendar sync are not enabled.
 
 ![Elevatria desktop workspace with a vision board, editable action plan, and progress tracking](docs/assets/elevatria-workspace.png)
 
@@ -39,46 +37,35 @@ The project focuses on maintainable architecture, reliable planning behavior, an
 
 ```mermaid
 flowchart LR
-    A[Gather your vision] --> B[Define a goal]
-    B --> C[Shape milestones & tasks]
-    C --> D[Choose a weekly focus]
-    D --> E[Track your progress]
-    E --> C
+    A[Vision board] --> B[Goals and editable tasks]
+    B --> C[Availability and dependencies]
+    C --> D[Review schedule proposal]
+    D --> E[Accept and track progress]
+    E --> F[Review a replan]
+    F --> D
 ```
 
 | Step | What you can do today |
 | :--- | :--- |
-| **01 · Imagine** | Pin notes and images to a central vision board. Connect inspiration to a goal or keep it independent. |
-| **02 · Define** | Describe the outcome, choose a target date, set available weekly hours, and record constraints. |
-| **03 · Make it actionable** | Generate a local starter plan, then edit, add, or remove milestones and tasks. Adjust task durations to match the actual work. |
-| **04 · Find your focus** | View the next incomplete tasks that fit the weekly effort budget, in plan order. |
-| **05 · Keep moving** | Complete or reopen tasks, watch progress update, and revise the plan manually as you learn. |
+| **01 · Imagine** | Pin notes and processed images. Connect inspiration to a goal or keep it independent. |
+| **02 · Define** | Describe an outcome, target date, weekly hours, constraints, category and scheduling priority. |
+| **03 · Shape** | Generate a transparent category-based starter plan. Edit milestones, tasks, durations and prerequisite dependencies, including across goals. Cycles are rejected. |
+| **04 · Make space** | Set recurring work windows, a planning timezone, fixed commitments, session limits and breaks. Generate a schedule across all goals. Inspect unscheduled work and its reasons. |
+| **05 · Choose** | Review a proposal and allocation changes before acceptance. Compare half-budget or later-deadline scenarios without changing your board. |
+| **06 · Keep moving** | Complete/reopen tasks; progress is weighted by estimated effort. Changes make an accepted schedule stale, so a new review is required before Calendar export. |
+| **07 · Keep your work** | Export/restore JSON after review, retain accepted schedule history, and download an ICS file with stable task-occurrence IDs. |
 
-### Start with a real example
-
-The included **Build an AI study assistant** sample contains three milestones, nine concrete tasks, and two completed tasks. Explore the journey from interviewing students to building, testing, and explaining a portfolio project. The sample describes a project you could build; it does not mean an AI study assistant is embedded in Elevatria.
-
-Load the sample from the sidebar on desktop or the footer on mobile. Choose **Start fresh** when you are ready for your own board. Replacing a board or an existing plan requires confirmation.
-
-## Thoughtful details
-
-- **A board that stays central.** Goal cards, image pins, and notes keep the reason behind the work visible.
-- **Plans you own.** Edit every milestone, task title, and estimate instead of accepting an opaque generated answer.
-- **Progress with context.** Completion is weighted by estimated task duration, so a five-minute task and a two-hour task contribute differently.
-- **A more realistic pace.** Weekly focus respects an effort budget; a capacity warning flags when remaining work exceeds the estimated time before the target date.
-- **Persistence that explains itself.** Saved data is validated. Read failures, quota errors, and changes from another tab are shown with recovery options.
-- **A usable small screen.** Responsive layouts, keyboard-operable controls, Escape-to-close dialogs, restored focus, and reduced-motion styling support the core workflow.
-- **No setup before exploration.** The demo opens with a complete sample, and all planning features work without an AI service.
+The included **Build an AI study assistant** example has three milestones, nine concrete tasks and two completed tasks. It describes a project you could build; an AI assistant is not embedded in Elevatria. Reload the example from the desktop sidebar or mobile footer, or choose **Start fresh** for an empty board.
 
 ## Quick start
 
-### 1. Check the prerequisites
+### 1. Prerequisites
 
 | Tool | Version |
 | :--- | :--- |
 | Node.js | **24 or newer** |
-| pnpm | **11.25.0**, pinned in `package.json` |
-| Git | Needed to clone the repository |
+| pnpm | **11.25.0**, pinned in package.json |
+| Git | To clone the source |
 
 ```sh
 node --version
@@ -86,163 +73,155 @@ npm install --global pnpm@11.25.0
 pnpm --version
 ```
 
-If the pinned pnpm version is already installed, skip its installation command. Network access is needed for the initial dependency installation.
+Skip pnpm installation if the pinned version is already available. The initial dependency installation needs network access.
 
-### 2. Get the source
+### 2. Install and launch
 
 ```sh
 git clone https://github.com/Prarth314/Elevatria-uplift-your-life.git
 cd Elevatria-uplift-your-life
-```
-
-**Already using the original local export?** Open the nested `elevatria-main` folder. In either case, run commands from the project root containing `package.json`, `pnpm-workspace.yaml`, and `src/`.
-
-### 3. Install and launch
-
-```sh
 pnpm install --frozen-lockfile
 npm run dev
 ```
 
-Open the **Local** URL printed in the terminal, normally [http://127.0.0.1:5173](http://127.0.0.1:5173). Keep the terminal running while using the app. Press **Ctrl+C** to stop it.
+Open the **Local** URL printed by Vite, normally [http://127.0.0.1:5173](http://127.0.0.1:5173). Keep the terminal running; press **Ctrl+C** to stop it. In the original local export, use the nested `elevatria-main` folder containing the root package.json and pnpm-workspace.yaml.
 
-The root commands work in Windows PowerShell and on macOS/Linux. They use Node scripts rather than requiring Bash or Unix `cp`.
+The root commands work in Windows PowerShell and macOS/Linux shells. **No .env or backend is required for the local demo.**
 
-### 4. Try your first goal
+### 3. Try a complete journey
 
-1. Choose **New goal** and describe a concrete outcome.
-2. Set a deadline, available weekly hours, and any constraints.
-3. Choose **Generate starter plan**, then tailor the milestones and tasks.
-4. Add inspiration, complete a task, and inspect the updated progress.
-5. Open **Weekly focus** to see the next tasks within your effort budget.
-6. Refresh the page to verify saved changes. Use **Export board** to download the workspace as JSON.
+1. Create a goal with a deadline, weekly hours and a category. Generate and edit its starter plan.
+2. Add a note or image to the vision board. Images must be PNG/JPEG/WebP under 1 MB and within supported dimensions.
+3. Complete a task and inspect effort-weighted progress. Refresh to verify local persistence.
+4. Open **Availability & planning preferences**. Add realistic work windows, choose your timezone, and save availability.
+5. Generate a proposal. Review placements and unscheduled work; accept it explicitly.
+6. Download the Calendar file or export the board JSON. Reopen a task or adjust availability and review a fresh replan before accepting it.
 
-### Environment variables
+### Optional account storage
 
-**No `.env` file is required for the current demo.**
+The local demo remains available when no cloud project is configured. [CLOUD_SETUP.md](docs/CLOUD_SETUP.md) explains how to prepare a **Supabase Free** project, apply **both SQL migrations**, configure GitHub OAuth and run the local API. No paid plan is required by the application.
 
-[`.env.example`](.env.example) documents an optional public Google OAuth client ID for the retained Calendar prototype and a future server-only AI key. Filling those placeholders does not activate integrations in the current planner. Provider secrets must never be placed in frontend code, `VITE_` variables, or browser storage.
+Copy [.env.example](.env.example) to an ignored .env only when configuring the integration. Public Supabase URL/publishable keys belong in the documented VITE_ variables; privileged keys belong only in server variables. The build guards recognizable privileged browser configuration. Do not paste secrets into chat, commit them, or store provider API keys in localStorage.
+
+For account development, run these in separate terminals:
+
+```sh
+npm run dev:api
+```
+
+```sh
+npm run dev -- --port 5174
+```
+
+The API binds to 127.0.0.1:5176; Vite proxies /api to it. Restart both processes after changing configuration. Account sign-in never automatically uploads the local board. Account documents stay in memory until explicitly saved; sign-out restores the separate local demo.
 
 ### Useful commands
 
 | Command | Purpose |
 | :--- | :--- |
-| `npm run dev` | Start the local Vite development server |
-| `npm run dev -- --port 5174` | Use a different port |
-| `npm run typecheck` | Check TypeScript across the frontend |
-| `npm test` | Run planning, validation, progress, and persistence tests |
-| `npm run build` | Create the production frontend in `src/frontend/dist` |
-| `npm run preview` | Serve the built frontend locally; run the build first |
-| `npm run audit` | Scan source for credential patterns without printing matched values |
+| `npm run dev` | Start the loopback-only development frontend |
+| `npm run dev -- --port 5174` | Choose another frontend port |
+| `npm run dev:api` | Start the optional local account API |
+| `npm run typecheck` | Check frontend and server TypeScript |
+| `npm test` | Run domain, security, service and PostgreSQL tests |
+| `npm run build` | Build production output in src/frontend/dist |
+| `npm run preview` | Preview the built frontend with production security headers |
+| `npm run audit -- --history --dist` | Scan source, supported Git text history and output without echoing matched credentials |
+| `pnpm audit --audit-level low` | Check the dependency graph against current advisories |
+| `npm run benchmark` | Run repeatable synthetic scheduling measurements |
 
 <details>
 <summary><strong>Local setup troubleshooting</strong></summary>
 
-- **The port is occupied:** use `npm run dev -- --port 5174`, then open the URL Vite prints. Storage is specific to an origin, so a different port has a separate demo board.
-- **The Node version is too old:** switch to Node 24 or newer. The test runner executes TypeScript with Node’s built-in support.
-- **You are in the wrong folder:** check that the current directory contains the root `package.json` and `pnpm-workspace.yaml`.
-- **An older pnpm installation behaves differently:** check `pnpm --version` and use the pinned version. The workspace explicitly allows esbuild’s install script and disables optional Biome/sharp scripts.
-- **Changes cannot be saved:** follow the in-app storage warning. Export the working board before leaving; if another tab changed the saved board, export any unsaved work and reload.
-- **A Browserslist or baseline-data warning appears:** the verified build reports stale browser metadata. This warning alone does not indicate a failed build.
+- **Occupied port:** choose another port. Each origin/port has its own demo data; export before switching.
+- **Old Node/pnpm:** use the versions above. Node's built-in TypeScript support runs the test suite and local API.
+- **Storage warning:** export unsaved work before leaving. Corrupt stored data is preserved for recovery; another tab's changes block automatic overwrites until reload/review.
+- **Cloud unavailable:** use the independent local demo; verify both migrations, credentials and OAuth redirect settings before retrying. Do not add billing to make local planning work.
+- **Nothing fits:** check work windows, timezone, goal hours, dependencies and deadlines. The scheduler reports unplaced work rather than overbooking.
+- **An invalid dependency edit is rejected:** remove a cyclic edge. Remove prerequisite references before deleting a task or milestone that other work depends on.
+- **Cloud size limit:** cloud boards are capped at 1 MB, smaller than local backups. Reduce embedded images/history or retain a local backup.
 
 </details>
 
 ## Under the surface
 
-### Technology
-
 | Layer | Implementation |
 | :--- | :--- |
-| Interface | React 19, TypeScript, Vite 5 |
-| Styling & interaction | Tailwind CSS, scoped planner CSS, Radix UI dialogs, Lucide icons |
-| Routing | TanStack Router; `/` and `/dashboard` open the planner |
-| Planning | Pure TypeScript template generation, capacity estimates, and weekly focus selection |
-| Persistence | A versioned localStorage workspace behind an injected storage interface |
-| Verification | Node’s test runner, TypeScript checks, GitHub Actions |
-| Retained experiment | Motoko / Internet Computer source and generated bindings, inactive in the demo |
-
-### Project structure
+| Interface | React 19, strict TypeScript, Vite 8, TanStack Router |
+| Design | Tailwind CSS, scoped planner CSS, Radix dialogs, Lucide icons, self-hosted Inter/Playfair fonts |
+| Domain | Pure template generation, schema validation, weighted progress and dependency graph checks |
+| Scheduling | Deterministic earliest-deadline heuristic, global availability, timezone/DST handling, bounded Web Worker and independent invariant validator |
+| Local persistence | Versioned localStorage adapter with visible failures and cross-tab overwrite protection |
+| Optional cloud | Same-origin Node/Vercel API, verified Supabase GitHub identity, server-only PostgreSQL RPCs, optimistic revisions and shared account limits |
+| Verification | Node test runner, PGlite PostgreSQL, TypeScript, package/source audits, immutable CI action pins |
+| Retained experiment | Inactive Motoko / Internet Computer source and generated bindings |
 
 ```text
-.
-├── src/
-│   ├── frontend/
-│   │   └── src/
-│   │       ├── pages/Planner.tsx      # Workspace composition and actions
-│   │       ├── planner/
-│   │       │   ├── Editors.tsx       # Editing and confirmation dialogs
-│   │       │   ├── model.ts          # Types, runtime validation, progress
-│   │       │   ├── planning.ts       # Generator, capacity, weekly focus
-│   │       │   ├── persistence.ts    # Validated loading and saving
-│   │       │   ├── sample.ts         # Ready-to-explore example
-│   │       │   └── planner.css       # Responsive visual design
-│   │       └── components/ui/        # Existing UI primitives
-│   └── backend/                     # Retained Motoko prototype
-├── tests/planner.test.ts             # Meaningful domain/storage tests
-├── scripts/                          # Portable commands and source audit
-├── docs/                             # Assessment, decisions, verification
-├── .github/workflows/ci.yml           # Install → typecheck → test → build
-└── vercel.json                       # Future static frontend configuration
+api/workspace.ts                   Vercel API entry point
+src/server/                        Authentication, HTTP limits and repository adapter
+src/frontend/src/pages/Planner.tsx  Workspace composition
+src/frontend/src/planner/
+  model.ts, structure.ts           Versioned data and strict validation
+  planning.ts, templates.ts        Editable local starter plans
+  dependencies.ts                  Graph validation
+  scheduler.ts, time.ts            Scheduling algorithm and timezone handling
+  schedule.worker.ts               Isolated, cancellable computation
+  SchedulePanel.tsx                Review, scenarios and accepted history
+  persistence.ts                   Demo/account storage boundary
+  CloudPanel.tsx                   Optional explicit account controls
+  images.ts, portability.ts        Bounded image processing, JSON and ICS
+  Editors.tsx, planner.css         Accessible editing and responsive design
+database/migrations/               Ordered PostgreSQL schema and security changes
+tests/                             Domain, cloud, database and security regressions
+docs/                              Setup, decisions, audit and verification
 ```
 
-Planning logic and persistence are separate from the UI so they can be tested independently and later connected to a server. Runtime validation checks dates, durations, IDs, workspace limits, image formats, and goal references before data is accepted from storage.
+The scheduler checks durations, shared windows, fixed commitments, deadlines, weekly goal budgets, breaks and prerequisite completion. It splits long tasks across sessions and explains remaining work. Nonexistent DST wall times are skipped with a warning; repeated times choose the earlier occurrence. The heuristic **does not prove optimality or infeasibility of every alternative arrangement**.
 
-The original prototype landing page, dashboard, admin screen, themes, Calendar modules, assets, and generated bindings remain in the repository for reference. The old member/admin screens are not part of the active routes. Original dependencies are being migrated incrementally rather than removed wholesale.
+Replanning recomputes unfinished work from now and requires review before replacement. It does not yet preserve manually locked slots, minimize disruption, infer completion, or interpret free-text constraints. Accepted history is bounded. Weekly focus remains a simpler ordered budget view; it is distinct from the scheduler.
 
-### Why keep the Motoko source inactive?
-
-The exported actor stores Calendar link metadata and includes platform-specific blob-storage code. It has no goal or task API, and its compiler/storage setup needs separate work. Milestone 1 therefore runs independently of it.
-
-The recommended next step is an authenticated API with a relational database and server-only AI access. This offers a direct path to ownership checks, structured responses, and reliable Calendar reconciliation while preserving the original ICP experiment. See the [architecture decision](docs/ARCHITECTURE.md) for the tradeoffs.
+The original Motoko backend has no goal/task API and depends on separate platform tooling. Keeping it inactive lets the web application remain Vercel-compatible while the conventional API provides testable ownership and concurrency boundaries. Legacy shell deployment entry points stop immediately; no canister is provisioned. See [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Clear about what works
 
-| Area | Current behavior | Still to build |
+| Area | Implemented | Remaining |
 | :--- | :--- | :--- |
-| Plan generation | A transparent, editable local template | Server AI with validated structured responses |
-| Availability | Weekly effort budget and rough deadline capacity | Specific time windows, time zones, dependencies, and scheduled slots |
-| Constraints | Recorded with the goal and displayed beside the plan | Automatic interpretation or enforcement |
-| Replanning | Manual edits; replacing a plan requires confirmation | Proposed rescheduling with a user-reviewed diff |
-| Identity & storage | One shared demo workspace per browser origin | Authentication, user isolation, cloud persistence, and cross-device sync |
-| Export | Workspace JSON download | Import/restore UI and idempotent Calendar export/sync |
+| Planning | Editable category templates, goals, milestones, tasks and dependencies | Optional server AI with validated responses |
+| Scheduling | Availability, timezone, deadlines, breaks, task splitting and reviewed proposals | Optimal search, session locks and minimal-disruption repair |
+| Account storage | Optional PKCE SDK, authenticated API, SQL permissions/revisions and explicit load/save/delete | Real OAuth/two-account/hosted verification, account deletion and operational policy |
+| Portability | Reviewed JSON restore and stable-UID ICS download | Google Calendar remote sync, idempotent reconciliation and failure recovery |
+| Security | Strict boundaries, resource limits, CSP, dependency/source CI checks | Live platform assessment and independent review before public account access |
 
-**Your data stays in this browser’s demo workspace.** The key is `elevatria.workspace.v1`. There is no account boundary or encrypted cloud store. Clearing site data removes saved work; avoid sensitive information. Legacy board/chat entries are left untouched, and the former prototype’s provider-key entry is removed on startup without reading it.
+The local demo is **one unencrypted board per browser origin**, not an authorized account store. Clearing browser data removes it. Account sessions use tab-scoped sessionStorage; account documents are kept out of the demo store. Export files contain your board. Retired prototype auth/provider-key entries are removed on startup without reading their contents; unrelated legacy board/chat data is preserved.
 
-Weekly focus preserves task order and stops when the next task cannot fit; it does not split work or solve dependencies. Capacity assumes a uniform daily share of weekly hours through the target day. Both are planning aids rather than calendar guarantees.
+## Verification and security
 
-## Verification
+The current suite has **35 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
-The current implementation has passed the frozen dependency install, full frontend type check, seven behavior-test groups, production build, and GitHub CI. Tests cover plan structure and unique IDs, schema rejection, weighted progress, complete/reopen behavior, deadline capacity, weekly effort bounds, persistence, and storage failures.
+Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 
-The main workflow was also exercised in a browser at **1440 × 1000** and **390 × 844**, including editing, image validation and persistence, keyboard completion, focus restoration, empty states, export, and conflict recovery between two tabs. No horizontal overflow was observed at those sizes.
+These checks do not establish production readiness. No live Supabase OAuth, hosted API, external AI, Google Calendar write or Motoko deployment has been verified.
 
-These checks do not establish production readiness or a formal accessibility certification. External AI, authentication, Motoko deployment, Calendar writes, and automated scheduling have not been enabled or verified.
+## Hosting and next steps
 
-[Read the verification record →](docs/VERIFICATION.md)
+The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies static routing and security headers; api/workspace.ts requires a Node serverless function only when account storage is enabled. Supabase is a separate optional backend. No public deployment has been performed. Free service limits and availability must be reviewed before connecting real users; unlimited free operation is not promised.
 
-## Where Elevatria is going
-
-- [x] **Milestone 1 · Make the core workflow reliable**<br />
-  Vision boards, editable goals and plans, progress, sample project, local persistence, responsive UI, and behavior tests.
-- [ ] **Milestone 2 · Connect identity, storage, and AI**<br />
-  Authenticated sessions, ownership-checked storage, server-only AI, validated output, explicit loading/failure/retry states, and a labeled demo fallback.
-- [ ] **Milestone 3 · Help the plan adapt to real life**<br />
-  Availability- and dependency-aware scheduling, user-reviewed replanning, and Calendar sync with duplicate prevention and visible failure recovery.
-
-## Hosting
-
-The frontend produces static files in `src/frontend/dist`. [`vercel.json`](vercel.json) contains a future Vercel configuration with a `/dashboard` SPA rewrite. No hosted deployment has been created or verified.
-
-The original `build.sh`, `deploy.sh`, `Dockerfile`, `icp.yaml`, and canister definitions belong to the retained ICP export. They require separate tooling and platform-specific runtime support; they are not needed to run the current frontend. Fonts use Google Fonts with system/Georgia fallbacks.
+- [x] **Core workflow:** visual boards, editable plans, progress, sample project, persistence and responsive editing.
+- [x] **Local scheduling:** dependency-aware proposals, scenarios, acceptance, history and file portability.
+- [x] **Security remediation:** bounded inputs, account isolation safeguards, SQL concurrency/rate limits and CI protections.
+- [ ] **Live account validation:** configure a free development project and verify real OAuth, two-user isolation and hosted behavior.
+- [ ] **Further planning intelligence:** optional free/local AI experiments with a reliable template fallback, session locks and repair strategies.
+- [ ] **Calendar integration:** user-reviewed remote synchronization with durable idempotency and partial-failure recovery.
 
 ## Project notes
 
-- [Codebase assessment](docs/ASSESSMENT.md) — what the original export actually implements.
-- [Architecture decision](docs/ARCHITECTURE.md) — current boundaries and backend tradeoffs.
-- [Verification record](docs/VERIFICATION.md) — checks performed and their limits.
-- [MIT license](LICENSE) — original license preserved.
+- [Original codebase assessment](docs/ASSESSMENT.md) — historical inspection of the starting export.
+- [Architecture](docs/ARCHITECTURE.md) — boundaries and backend tradeoffs.
+- [Cloud setup](docs/CLOUD_SETUP.md) — optional, free-service development steps.
+- [Security audit](docs/SECURITY_AUDIT.md) — findings and remaining verification.
+- [Verification](docs/VERIFICATION.md) — checks actually performed.
 
-Developed by **[Prarth Gupta](https://github.com/Prarth314)**. Existing generated scaffolding, reference screenshots, and botanical art are preserved. The active board landscape is drawn in CSS; interface icons come from Lucide. The README banner is a repository-native SVG, and the preview is an actual application screenshot.
+Developed by **[Prarth Gupta](https://github.com/Prarth314)**. Existing source licenses and attribution are preserved. Required botanical artwork remains; unused prototype screenshots were removed. The board landscape is CSS, interface icons are Lucide, and the README banner is repository-native SVG. Font licenses ship in src/frontend/public/licenses.
 
 ---
 

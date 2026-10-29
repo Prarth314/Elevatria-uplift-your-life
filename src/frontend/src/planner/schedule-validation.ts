@@ -1,21 +1,27 @@
 import { clockMinutes, validTimezone } from "./time.ts";
 import type { PlanningState, ScheduleSettings } from "./schedule-types.ts";
-const object = (v: unknown): v is Record<string, any> =>
-	!!v && typeof v === "object" && !Array.isArray(v);
-const id = (v: unknown) =>
-	typeof v === "string" && v.length > 0 && v.length <= 160;
-const date = (v: unknown) =>
-	typeof v === "string" &&
-	/^\d{4}-\d{2}-\d{2}$/.test(v) &&
-	Number.isFinite(Date.parse(`${v}T12:00:00Z`)) &&
-	new Date(`${v}T12:00:00Z`).toISOString().slice(0, 10) === v;
-const instant = (v: unknown) =>
-	typeof v === "string" &&
-	Number.isFinite(Date.parse(v)) &&
-	new Date(v).toISOString() === v;
+import {
+	plain,
+	identifier as id,
+	label,
+	calendarDate as date,
+	isoInstant as instant,
+	boundedText,
+	LIMITS,
+} from "./structure.ts";
 export function settingsErrors(settings: ScheduleSettings): string[] {
 	const errors: string[] = [];
-	if (!settings || !validTimezone(settings.timezone))
+	if (
+		!plain(settings, [
+			"timezone",
+			"horizonDays",
+			"sessionMinutes",
+			"breakMinutes",
+			"windows",
+			"commitments",
+		]) ||
+		!validTimezone(settings.timezone)
+	)
 		errors.push("Choose a valid IANA timezone, such as America/Chicago.");
 	if (
 		!Number.isInteger(settings?.horizonDays) ||
@@ -45,7 +51,7 @@ export function settingsErrors(settings: ScheduleSettings): string[] {
 	const ids = new Set();
 	for (const w of settings.windows) {
 		if (
-			!object(w) ||
+			!plain(w, ["id", "weekday", "start", "end"]) ||
 			!id(w.id) ||
 			ids.has(w.id) ||
 			!Number.isInteger(w.weekday) ||
@@ -60,13 +66,11 @@ export function settingsErrors(settings: ScheduleSettings): string[] {
 	}
 	for (const c of settings.commitments) {
 		if (
-			!object(c) ||
+			!plain(c, ["id", "date", "start", "end", "title"]) ||
 			!id(c.id) ||
 			ids.has(c.id) ||
 			!date(c.date) ||
-			typeof c.title !== "string" ||
-			!c.title.trim() ||
-			c.title.length > 160 ||
+			!label(c.title) ||
 			!(clockMinutes(c.start) < clockMinutes(c.end))
 		)
 			errors.push(
@@ -88,57 +92,87 @@ export function settingsErrors(settings: ScheduleSettings): string[] {
 }
 export function validPlanning(value: unknown): value is PlanningState {
 	if (
-		!object(value) ||
-		!object(value.settings) ||
-		settingsErrors(value.settings as ScheduleSettings).length ||
+		!plain(value, ["settings", "accepted", "history"]) ||
+		!plain(value.settings, [
+			"timezone",
+			"horizonDays",
+			"sessionMinutes",
+			"breakMinutes",
+			"windows",
+			"commitments",
+		]) ||
+		settingsErrors(value.settings as unknown as ScheduleSettings).length ||
 		!Array.isArray(value.history) ||
 		value.history.length > 10
 	)
 		return false;
 	const snapshots = [
 		...value.history,
-		...(value.accepted ? [value.accepted] : []),
+		...(value.accepted === undefined ? [] : [value.accepted]),
 	];
-	return snapshots.every(
-		(s) =>
-			object(s) &&
-			id(s.id) &&
-			s.algorithm === "earliest-deadline-v1" &&
-			instant(s.createdAt) &&
-			id(s.inputRevision) &&
-			Array.isArray(s.sessions) &&
-			s.sessions.length <= 10000 &&
-			s.sessions.every(
-				(x: unknown) =>
-					object(x) &&
-					id(x.id) &&
-					id(x.taskId) &&
-					id(x.goalId) &&
-					id(x.title) &&
-					instant(x.start) &&
-					instant(x.end) &&
-					Date.parse(x.end) > Date.parse(x.start),
-			) &&
-			new Set(s.sessions.map((x: any) => x.id)).size === s.sessions.length &&
-			Array.isArray(s.unscheduled) &&
-			s.unscheduled.length <= 1000 &&
-			s.unscheduled.every(
-				(x: unknown) =>
-					object(x) &&
-					id(x.taskId) &&
-					id(x.title) &&
-					Number.isInteger(x.remainingMinutes) &&
-					x.remainingMinutes > 0 &&
-					[
-						"DEPENDENCY_BLOCKED",
-						"INSUFFICIENT_CAPACITY",
-						"DEADLINE_PASSED",
-					].includes(x.reason),
-			) &&
-			Array.isArray(s.warnings) &&
-			s.warnings.length <= 100 &&
-			s.warnings.every(
-				(x: unknown) => typeof x === "string" && x.length <= 1000,
-			),
-	);
+	let totalSessions = 0;
+	for (const s of snapshots) {
+		if (
+			!plain(s, [
+				"id",
+				"algorithm",
+				"createdAt",
+				"inputRevision",
+				"sessions",
+				"unscheduled",
+				"warnings",
+			]) ||
+			!id(s.id) ||
+			s.algorithm !== "earliest-deadline-v1" ||
+			!instant(s.createdAt) ||
+			!id(s.inputRevision) ||
+			!Array.isArray(s.sessions) ||
+			s.sessions.length > LIMITS.sessionsPerVersion ||
+			!Array.isArray(s.unscheduled) ||
+			s.unscheduled.length > LIMITS.tasks ||
+			!Array.isArray(s.warnings) ||
+			s.warnings.length > 100
+		)
+			return false;
+		totalSessions += s.sessions.length;
+		if (totalSessions > LIMITS.sessionsAcrossHistory) return false;
+		const ids = new Set<string>();
+		for (const x of s.sessions) {
+			if (
+				!plain(x, ["id", "taskId", "goalId", "title", "start", "end"]) ||
+				!id(x.id) ||
+				ids.has(x.id) ||
+				!id(x.taskId) ||
+				!id(x.goalId) ||
+				!label(x.title) ||
+				!instant(x.start) ||
+				!instant(x.end) ||
+				Date.parse(x.end) <= Date.parse(x.start) ||
+				Date.parse(x.end) - Date.parse(x.start) > 120 * 60000
+			)
+				return false;
+			ids.add(x.id);
+		}
+		const taskIds = new Set<string>();
+		for (const x of s.unscheduled) {
+			if (
+				!plain(x, ["taskId", "title", "remainingMinutes", "reason"]) ||
+				!id(x.taskId) ||
+				taskIds.has(x.taskId) ||
+				!label(x.title) ||
+				!Number.isInteger(x.remainingMinutes) ||
+				(x.remainingMinutes as number) < 1 ||
+				(x.remainingMinutes as number) > 480 ||
+				![
+					"DEPENDENCY_BLOCKED",
+					"INSUFFICIENT_CAPACITY",
+					"DEADLINE_PASSED",
+				].includes(String(x.reason))
+			)
+				return false;
+			taskIds.add(x.taskId);
+		}
+		if (!s.warnings.every((x) => boundedText(x, 1000))) return false;
+	}
+	return true;
 }

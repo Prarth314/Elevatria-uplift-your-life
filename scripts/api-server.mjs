@@ -16,6 +16,10 @@ const server = createServer((req, res) => {
 		res.end("Not found");
 	}
 });
+server.requestTimeout = 15000;
+server.headersTimeout = 10000;
+server.keepAliveTimeout = 5000;
+server.maxRequestsPerSocket = 100;
 server.listen(5176, "127.0.0.1", () =>
 	console.log("Elevatria local API: http://127.0.0.1:5176"),
 );

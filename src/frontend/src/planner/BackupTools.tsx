@@ -1,10 +1,11 @@
+import { normalizeImageData } from "./images";
 import { useState } from "react";
 import type { Workspace } from "./model.ts";
 import { parseBackup } from "./portability.ts";
 import { Editor } from "./Editors";
 export function BackupTools({
 	save,
-}: { save: (workspace: Workspace, message?: string) => void }) {
+}: { save: (workspace: Workspace, message?: string) => boolean }) {
 	const [pending, setPending] = useState<Workspace | null>(null),
 		[error, setError] = useState(""),
 		[reading, setReading] = useState(false);
@@ -15,7 +16,10 @@ export function BackupTools({
 		try {
 			if (file.size > 8_000_000)
 				throw Error("Choose a JSON backup under 8 MB.");
-			setPending(parseBackup(await file.text()));
+			const parsed = parseBackup(await file.text());
+			for (const item of parsed.items)
+				if (item.image) item.image = await normalizeImageData(item.image);
+			setPending(parsed);
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "The file could not be read.");
 		} finally {
@@ -28,7 +32,7 @@ export function BackupTools({
 				<h3>Your plans belong to you.</h3>
 				<p>
 					Restore an exported JSON board after reviewing its contents. Import
-					replaces this browser’s current board; export it first to keep a copy.
+					replaces the current board; export it first to keep a copy.
 				</p>
 			</div>
 			<label className="quiet-button">
@@ -52,7 +56,7 @@ export function BackupTools({
 			{pending && (
 				<Editor
 					title="Review backup restoration"
-					description="This replaces the current board, goals, progress, and planning history. Reimporting the same file replaces the board rather than duplicating it."
+					description="This replaces the current board, goals, progress, and planning history. Embedded images are re-encoded to remove metadata. Reimporting the same file replaces the board rather than duplicating it."
 					close={() => setPending(null)}
 				>
 					<dl className="import-summary">
@@ -90,11 +94,15 @@ export function BackupTools({
 						<button
 							className="primary-button"
 							onClick={() => {
-								save(
+								const applied = save(
 									pending,
 									"Backup restored. Existing IDs are preserved; no duplicates were created.",
 								);
-								setPending(null);
+								if (applied) setPending(null);
+								else
+									setError(
+										"The backup exceeds board limits. Your previous board is unchanged.",
+									);
 							}}
 						>
 							Replace board with backup

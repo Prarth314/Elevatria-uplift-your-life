@@ -17,3 +17,9 @@ Thumbs.db
 src/backend/*.wasm
 artifacts/
 coverage/
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
