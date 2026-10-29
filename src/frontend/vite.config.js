@@ -14,6 +14,7 @@ process.env.STORAGE_GATEWAY_URL =
 
 export default defineConfig({
   logLevel: "info",
+ envDir: "../..",
   build: {
     emptyOutDir: true,
     sourcemap: false,
@@ -33,12 +34,13 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:4943",
+        target: "http://127.0.0.1:5176",
         changeOrigin: true,
       },
     },
   },
   plugins: [
+ { name: "reject-browser-service-keys", configResolved(config) { const key=config.env.VITE_SUPABASE_PUBLISHABLE_KEY; if(!key)return; let privileged=key.startsWith("sb_secret_"); try { if(key.split(".").length===3)privileged ||= JSON.parse(Buffer.from(key.split(".")[1],"base64url").toString()).role!=="anon"; }catch{privileged=true;} if(privileged)throw new Error("A privileged Supabase key cannot be used in a VITE_ variable. Use a publishable/anon key."); } },
     environment("all", { prefix: "CANISTER_" }),
     environment("all", { prefix: "DFX_" }),
     environment(["II_URL"]),

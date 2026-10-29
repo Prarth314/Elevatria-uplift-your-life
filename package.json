@@ -9,11 +9,14 @@
     "dev": "node scripts/frontend.mjs dev",
     "build": "node scripts/frontend.mjs build",
     "preview": "node scripts/frontend.mjs preview",
-    "typecheck": "node scripts/frontend.mjs typecheck",
+    "typecheck": "node scripts/frontend.mjs typecheck && npm run typecheck:server",
     "test": "node --test tests/*.test.ts",
-    "audit": "node scripts/audit-source.mjs"
+    "audit": "node scripts/audit-source.mjs",
+    "dev:api": "node scripts/api-server.mjs",
+    "typecheck:server": "node src/frontend/node_modules/typescript/bin/tsc -p tsconfig.server.json --noEmit"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
     "sharp": "^0.34.4"
   },
   "private": true,

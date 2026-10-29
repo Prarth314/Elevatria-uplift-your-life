@@ -1,3 +1,4 @@
+import CloudPanel from "../planner/CloudPanel";
 import { SchedulePanel } from "../planner/SchedulePanel";
 import { BackupTools } from "../planner/BackupTools";
 import { dependencyErrors } from "../planner/dependencies";
@@ -80,6 +81,7 @@ export default function Planner() {
 	const [selectedId, setSelectedId] = useState(
 		() => workspace.goals[0]?.id ?? "",
 	);
+	const [cloudOwner, setCloudOwner] = useState<string | null>(null);
 	const [editing, setEditing] = useState<Editing>(null);
 	const [saveError, setSaveError] = useState(
 		initial.status === "error" ? initial.message : "",
@@ -106,6 +108,12 @@ export default function Planner() {
 			return;
 		}
 		setWorkspace(next);
+		if (cloudOwner) {
+			setNotice(
+				"Account changes are in memory. Use Save cloud board to persist them.",
+			);
+			return;
+		}
 		if (blocked) {
 			setNotice("Changes are in memory only. Export your board to keep them.");
 			return;
@@ -237,6 +245,26 @@ export default function Planner() {
 			);
 		else run();
 	}
+	function restoreDemo() {
+		const result = loadWorkspace(browserStorage);
+		const next =
+			result.status === "ready" ? result.workspace : sampleWorkspace();
+		setCloudOwner(null);
+		setWorkspace(next);
+		setSelectedId(next.goals[0]?.id ?? "");
+		setEditing(null);
+		setBlocked(result.status === "error");
+		setSaveError(result.status === "error" ? result.message : "");
+	}
+	function openCloud(next: Workspace, owner: string) {
+		setCloudOwner(owner);
+		setWorkspace(next);
+		setSelectedId(next.goals[0]?.id ?? "");
+		setEditing(null);
+		setBlocked(false);
+		setSaveError("");
+		setNotice("Account board loaded in memory. Save cloud changes explicitly.");
+	}
 	function reset(empty: boolean) {
 		confirm(
 			empty ? "Start a fresh board?" : "Reload the sample project?",
@@ -249,6 +277,12 @@ export default function Planner() {
 				setBlocked(false);
 				setWorkspace(next);
 				setSelectedId(next.goals[0]?.id ?? "");
+				if (cloudOwner) {
+					setNotice(
+						"Account board replaced in memory. Save cloud board to commit it.",
+					);
+					return;
+				}
 				const error = saveWorkspace(browserStorage, next);
 				setSaveError(error ?? "");
 				setNotice(
@@ -377,7 +411,7 @@ export default function Planner() {
 				</div>
 				<div className="sidebar-bottom">
 					<span className="demo-dot" />
-					LOCAL DEMO
+					{cloudOwner ? "ACCOUNT BOARD" : "LOCAL DEMO"}
 					<button onClick={exportBoard}>
 						<Download size={15} />
 						Export board
@@ -386,13 +420,20 @@ export default function Planner() {
 						Explore sample project <ArrowUpRight size={14} />
 					</button>
 					<button onClick={() => reset(true)}>Start a fresh board</button>
-					<small>Saved in this browser. No account or cloud sync.</small>
+					<small>
+						{cloudOwner
+							? "Account changes stay in memory until explicitly saved to cloud."
+							: "Saved in this browser. No account or cloud sync."}
+					</small>
 				</div>
 			</aside>
 			<div className="planner-main">
 				<header className="planner-topbar">
 					<span>
-						Local demo · Your space to grow <Leaf size={13} />
+						{cloudOwner
+							? "Account board · Your space to grow"
+							: "Local demo · Your space to grow"}{" "}
+						<Leaf size={13} />
 					</span>
 					<span className="save-status" role="status">
 						<span
@@ -400,7 +441,9 @@ export default function Planner() {
 						/>
 						{saveError || blocked
 							? "Saved changes need attention"
-							: "Saved on this device"}
+							: cloudOwner
+								? "Account board · Save explicitly"
+								: "Saved on this device"}
 					</span>
 				</header>
 				<main>
@@ -893,7 +936,17 @@ export default function Planner() {
 							</button>
 						</section>
 					)}
-					<SchedulePanel workspace={workspace} save={persist} />
+					<SchedulePanel
+						key={cloudOwner ?? "demo"}
+						workspace={workspace}
+						save={persist}
+					/>
+					<CloudPanel
+						workspace={workspace}
+						owner={cloudOwner}
+						onLoad={openCloud}
+						onLeave={restoreDemo}
+					/>
 					<BackupTools save={persist} />
 					<div className="mobile-board-actions">
 						<span>
