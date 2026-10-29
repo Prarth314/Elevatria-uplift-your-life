@@ -26,7 +26,7 @@ Elevatria is a visual goal-planning application built around a simple idea: the 
 
 Keep your inspiration in sight, define what success looks like, break a goal into milestones, and track the work as it happens. The experience pairs a botanical palette and editorial typography with clear editing interactions, realistic effort estimates, and room to change direction.
 
-The project began as a frontend learning experiment exported from [Caffeine](https://caffeine.ai/). It is now evolving into a software engineering portfolio project focused on maintainable architecture, reliable planning behavior, and a future AI-assisted workflow.
+The project focuses on maintainable architecture, reliable planning behavior, and a future AI-assisted workflow.
 
 > **Current release · Milestone 1**<br />
 > A working local demo with browser persistence and template-based plan generation. No signup, AI key, backend setup, or paid service is required. Authentication, server AI, automatic scheduling, and Calendar sync are planned, not active features.
@@ -187,11 +187,11 @@ The root commands work in Windows PowerShell and on macOS/Linux. They use Node s
 
 Planning logic and persistence are separate from the UI so they can be tested independently and later connected to a server. Runtime validation checks dates, durations, IDs, workspace limits, image formats, and goal references before data is accepted from storage.
 
-The original Caffeine landing page, dashboard, admin screen, themes, Calendar modules, assets, and generated bindings remain in the repository for reference. The old member/admin screens are not part of the active routes. Original dependencies are being migrated incrementally rather than removed wholesale.
+The original prototype landing page, dashboard, admin screen, themes, Calendar modules, assets, and generated bindings remain in the repository for reference. The old member/admin screens are not part of the active routes. Original dependencies are being migrated incrementally rather than removed wholesale.
 
 ### Why keep the Motoko source inactive?
 
-The exported actor stores Calendar link metadata and includes Caffeine-specific blob-storage code. It has no goal or task API, and its compiler/storage setup needs separate work. Milestone 1 therefore runs independently of it.
+The exported actor stores Calendar link metadata and includes platform-specific blob-storage code. It has no goal or task API, and its compiler/storage setup needs separate work. Milestone 1 therefore runs independently of it.
 
 The recommended next step is an authenticated API with a relational database and server-only AI access. This offers a direct path to ownership checks, structured responses, and reliable Calendar reconciliation while preserving the original ICP experiment. See the [architecture decision](docs/ARCHITECTURE.md) for the tradeoffs.
 
@@ -233,7 +233,7 @@ These checks do not establish production readiness or a formal accessibility cer
 
 The frontend produces static files in `src/frontend/dist`. [`vercel.json`](vercel.json) contains a future Vercel configuration with a `/dashboard` SPA rewrite. No hosted deployment has been created or verified.
 
-The original `build.sh`, `deploy.sh`, `Dockerfile`, `icp.yaml`, and canister definitions belong to the retained ICP export. They require separate tooling and Caffeine-specific runtime support; they are not needed to run the current frontend. Fonts use Google Fonts with system/Georgia fallbacks.
+The original `build.sh`, `deploy.sh`, `Dockerfile`, `icp.yaml`, and canister definitions belong to the retained ICP export. They require separate tooling and platform-specific runtime support; they are not needed to run the current frontend. Fonts use Google Fonts with system/Georgia fallbacks.
 
 ## Project notes
 
@@ -242,7 +242,7 @@ The original `build.sh`, `deploy.sh`, `Dockerfile`, `icp.yaml`, and canister def
 - [Verification record](docs/VERIFICATION.md) — checks performed and their limits.
 - [MIT license](LICENSE) — original license preserved.
 
-Created and developed by **[Prarth Gupta](https://github.com/Prarth314)**. Original source exported from **[Caffeine](https://caffeine.ai/)**. Existing generated scaffolding, reference screenshots, and botanical art are preserved. The active board landscape is drawn in CSS; interface icons come from Lucide. The README banner is a repository-native SVG, and the preview is an actual application screenshot.
+Developed by **[Prarth Gupta](https://github.com/Prarth314)**. Existing generated scaffolding, reference screenshots, and botanical art are preserved. The active board landscape is drawn in CSS; interface icons come from Lucide. The README banner is a repository-native SVG, and the preview is an actual application screenshot.
 
 ---
 
@@ -289,7 +289,7 @@ THE SOFTWARE.
 </details>
 
 <p align="center">
-  <sub>© 2026 Prarth Gupta · Original license and Caffeine attribution preserved.</sub><br />
+  <sub>© 2026 Prarth Gupta · Licensed under MIT.</sub><br />
   <br />
   <em>Built for intention. Made for real life.</em><br />
   <sub>Elevatria — Uplift Your Life</sub>

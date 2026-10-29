@@ -14,8 +14,8 @@ Inspected October 29, 2026. The project root is the nested `elevatria-main` dire
 | Gratitude | Entries stored only in React component state, lost on reload. |
 | Webhooks | Sends arbitrary board/roadmap payloads to a user-entered URL. Success toast does not check HTTP response status. No service-specific Notion/Slack integration or reliable sync protocol. Inactive in the new app. |
 | Google Calendar | Real OAuth/Calendar insertion code, encrypted tab token storage with an in-memory key, retry logic, and canister event-link writes. No configured client ID or usable backend config in the export. Event-link read method exists but is never checked before insertion. Retrying after insertion or canister failure can duplicate events. Roadmap day IDs collide between plans, event times are generated from the current time, not availability. Not end-to-end verified or enabled. |
-| Backend | Motoko actor stores Calendar-linked booleans per principal and task/event mappings namespaced by principal. Blob-storage mixin uses Caffeine-specific primitives and cashier/gateway configuration. No goal, task, user-profile, scheduling, or AI implementation. `triggerDapps` is an empty function. Anonymous callers are not rejected. |
-| Deployment | ICP CLI YAML, Linux Bash/Docker flow, hardcoded Caffeine compiler paths/version, and mixed Motoko base/core packages. Exported env config has undefined placeholders. No local ICP/Motoko compiler is available. Static frontend can run independently. |
+| Backend | Motoko actor stores Calendar-linked booleans per principal and task/event mappings namespaced by principal. Blob-storage mixin uses platform-specific primitives and cashier/gateway configuration. No goal, task, user-profile, scheduling, or AI implementation. `triggerDapps` is an empty function. Anonymous callers are not rejected. |
+| Deployment | ICP CLI YAML, Linux Bash/Docker flow, hardcoded compiler paths/version, and mixed Motoko base/core packages. Exported env config has undefined placeholders. No local ICP/Motoko compiler is available. Static frontend can run independently. |
 
 ## Original verification
 
@@ -24,7 +24,7 @@ Inspected October 29, 2026. The project root is the nested `elevatria-main` dire
 - No test files or test script were present.
 - First install was blocked by sandbox store permissions; authorized install completed dependency fetching but pnpm 11 rejected unspecified dependency build scripts. Explicit build policy now permits only esbuild; the final frozen install passes.
 - The original pnpm build invokes Unix `cp`; root scripts now use Node and work on Windows.
-- Source credential-pattern scan found no embedded real provider keys, private keys, or email-address matches. Env/config files contain placeholders. Bundled screenshot assets were visually reviewed; they show prototype UI, sample prompts, and a Caffeine app URL, without visible authentication tokens or direct personal identifiers. Files excluded from Git include dependencies, compiled assets/Wasm, env files, logs, and caches. This pattern scan is a bounded review, not a guarantee against every possible secret format.
+- Source credential-pattern scan found no embedded real provider keys, private keys, or email-address matches. Env/config files contain placeholders. Bundled screenshot assets were visually reviewed; they show prototype UI, sample prompts, and a prototype app URL, without visible authentication tokens or direct personal identifiers. Files excluded from Git include dependencies, compiled assets/Wasm, env files, logs, and caches. This pattern scan is a bounded review, not a guarantee against every possible secret format.
 
 ## Priority order
 
