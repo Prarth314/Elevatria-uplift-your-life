@@ -1,35 +1,11 @@
+import { templates } from "./templates.ts";
 import { newId, progress } from "./model.ts";
 import type { Goal, Milestone, Task } from "./model.ts";
 
 /** A transparent local starter, deliberately not presented as AI output. */
 export function generatePlan(goal: Goal): Milestone[] {
-	const phases: [string, [string, number][]][] = [
-		[
-			"Define the destination",
-			[
-				[`Define what success means for “${goal.title}”`.slice(0, 160), 30],
-				["List the resources, skills, and support you need", 45],
-				["Choose one small deliverable and write its acceptance criteria", 30],
-			],
-		],
-		[
-			"Build a first version",
-			[
-				["Complete a focused first attempt at your deliverable", 90],
-				["Review the result against your acceptance criteria", 30],
-				["Improve the weakest part with another focused attempt", 90],
-			],
-		],
-		[
-			"Reflect and finish",
-			[
-				["Get feedback from someone you trust", 30],
-				["Apply feedback and complete your deliverable", 60],
-				["Record the result and choose your next step", 30],
-			],
-		],
-	];
-	return phases.map(([title, tasks]) => ({
+	const phases = templates[goal.category ?? "custom"];
+	const milestones = phases.map(([title, tasks]) => ({
 		id: newId(),
 		title,
 		tasks: tasks.map(([title, minutes]) => ({
@@ -39,6 +15,13 @@ export function generatePlan(goal: Goal): Milestone[] {
 			completed: false,
 		})),
 	}));
+	let previous: string | undefined;
+	for (const milestone of milestones)
+		for (const task of milestone.tasks) {
+			(task as Task).dependsOn = previous ? [previous] : [];
+			previous = task.id;
+		}
+	return milestones;
 }
 
 /** Capacity estimate only: no time slots, dependency guarantees, or calendar events. */

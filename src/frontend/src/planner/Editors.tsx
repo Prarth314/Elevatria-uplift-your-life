@@ -141,6 +141,33 @@ export function GoalEditor({
 					/>
 				</label>
 				<label>
+					Plan category
+					<select
+						value={draft.category ?? "custom"}
+						onChange={(e) =>
+							set("category", e.target.value as Goal["category"])
+						}
+					>
+						<option value="custom">Custom goal</option>
+						<option value="project">Software or practical project</option>
+						<option value="learning">Learn a skill</option>
+						<option value="creative">Creative project</option>
+					</select>
+				</label>
+				<label>
+					Scheduling priority
+					<select
+						value={draft.priority ?? 2}
+						onChange={(e) =>
+							set("priority", Number(e.target.value) as Goal["priority"])
+						}
+					>
+						<option value="1">Low</option>
+						<option value="2">Normal</option>
+						<option value="3">High</option>
+					</select>
+				</label>
+				<label>
 					Board color
 					<select
 						value={draft.color}
@@ -304,10 +331,16 @@ export function ItemEditor({
 	);
 }
 export function TaskEditor({
+	allTasks = [],
 	task,
 	save,
 	close,
-}: { task?: Task; save: (task: Task) => void; close: () => void }) {
+}: {
+	allTasks?: Task[];
+	task?: Task;
+	save: (task: Task) => void;
+	close: () => void;
+}) {
 	const [draft, setDraft] = useState<Task>(
 		task ?? { id: newId(), title: "", minutes: 30, completed: false },
 	);
@@ -349,6 +382,32 @@ export function TaskEditor({
 						}
 					/>
 				</label>
+				<fieldset className="dependency-editor">
+					<legend>Finish these tasks first (optional)</legend>
+					<p>
+						Dependencies can cross goals. Cycles are rejected when saving.
+						Remove dependencies before deleting a prerequisite.
+					</p>
+					{allTasks
+						.filter((t) => t.id !== draft.id)
+						.map((t) => (
+							<label key={t.id}>
+								<input
+									type="checkbox"
+									checked={(draft.dependsOn ?? []).includes(t.id)}
+									onChange={(e) =>
+										setDraft({
+											...draft,
+											dependsOn: e.target.checked
+												? [...(draft.dependsOn ?? []), t.id]
+												: (draft.dependsOn ?? []).filter((id) => id !== t.id),
+										})
+									}
+								/>
+								<span>{t.title}</span>
+							</label>
+						))}
+				</fieldset>
 				<div className="editor-actions">
 					<button className="quiet-button" type="button" onClick={close}>
 						Cancel

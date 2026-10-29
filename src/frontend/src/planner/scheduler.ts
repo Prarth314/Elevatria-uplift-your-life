@@ -101,6 +101,7 @@ export function generateSchedule(
 	);
 	if (tasks.length > 1000)
 		throw Error("Scheduling supports at most 1,000 tasks per workspace.");
+	const order = new Map(tasks.map((task, index) => [task.id, index]));
 	const { slots, warnings } = availableSlots(settings, now);
 	const sessions: Session[] = [],
 		unscheduled: Unscheduled[] = [];
@@ -117,6 +118,7 @@ export function generateSchedule(
 				(a, b) =>
 					a.goal.targetDate.localeCompare(b.goal.targetDate) ||
 					(b.goal.priority ?? 2) - (a.goal.priority ?? 2) ||
+					order.get(a.id)! - order.get(b.id)! ||
 					a.id.localeCompare(b.id),
 			);
 		if (!eligible.length)
@@ -162,7 +164,7 @@ export function generateSchedule(
 				if (duration < Math.min(15, remaining)) break;
 				const end = start + duration * minute;
 				sessions.push({
-					id: `${task.id}:${start}`,
+					id: `${task.id.slice(0, 120)}:${start}`,
 					taskId: task.id,
 					goalId: task.goal.id,
 					title: task.title,

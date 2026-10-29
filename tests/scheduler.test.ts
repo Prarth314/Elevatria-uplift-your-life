@@ -8,9 +8,19 @@ import {
 } from "../src/frontend/src/planner/scheduler.ts";
 import { wallInstant } from "../src/frontend/src/planner/time.ts";
 import { validWorkspace } from "../src/frontend/src/planner/model.ts";
+import { parseBackup } from "../src/frontend/src/planner/portability.ts";
 import type { Workspace } from "../src/frontend/src/planner/model.ts";
 import type { ScheduleSettings } from "../src/frontend/src/planner/schedule-types.ts";
 const now = "2026-10-26T08:00:00.000Z";
+
+test('accepted schedules and history persist through validated backup restoration',()=>{
+  const {workspace,settings}=fixture();const accepted=generateSchedule(workspace,settings,now);
+  workspace.planning={settings,accepted,history:[accepted]};
+  assert.equal(validWorkspace(workspace),true);
+  assert.deepEqual(parseBackup(JSON.stringify(workspace)),workspace);
+  (workspace.planning.accepted.sessions[0] as any).start='not-a-date';
+  assert.equal(validWorkspace(workspace),false);
+});
 function fixture(): { workspace: Workspace; settings: ScheduleSettings } {
 	return {
 		workspace: {

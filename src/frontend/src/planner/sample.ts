@@ -45,6 +45,12 @@ export function sampleWorkspace(): Workspace {
 			completed,
 		})),
 	}));
+	let previous: string | undefined;
+	for (const milestone of milestones)
+		for (const task of milestone.tasks) {
+			task.dependsOn = previous ? [previous] : [];
+			previous = task.id;
+		}
 	const goalId = newId();
 	return {
 		version: 1,
@@ -52,6 +58,8 @@ export function sampleWorkspace(): Workspace {
 			{
 				id: goalId,
 				title: "Build an AI study assistant",
+				category: "project",
+				priority: 2,
 				description:
 					"Turn class notes into a useful study plan. Ship one thoughtful project I can explain with confidence in an internship interview.",
 				targetDate: dateAfter(35),

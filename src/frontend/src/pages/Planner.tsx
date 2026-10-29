@@ -1,3 +1,6 @@
+import { SchedulePanel } from "../planner/SchedulePanel";
+import { BackupTools } from "../planner/BackupTools";
+import { dependencyErrors } from "../planner/dependencies";
 import { useEffect, useState } from "react";
 import {
 	ArrowDown,
@@ -91,6 +94,11 @@ export default function Planner() {
 	const close = () => setEditing(null);
 
 	function persist(next: Workspace, message = "Changes saved on this device.") {
+		const graphErrors = dependencyErrors(next);
+		if (graphErrors.length) {
+			setSaveError(graphErrors.join(" "));
+			return;
+		}
 		if (!validWorkspace(next)) {
 			setSaveError(
 				"This change exceeds a board limit or contains invalid data. Your previous board is unchanged.",
@@ -353,6 +361,9 @@ export default function Planner() {
 						Progress
 					</a>
 				</nav>
+				<a className="schedule-nav" href="#schedule">
+					Schedule &amp; replan ↗
+				</a>
 				<div className="sidebar-note">
 					<Flower2 size={30} strokeWidth={1} />
 					<p>
@@ -882,6 +893,8 @@ export default function Planner() {
 							</button>
 						</section>
 					)}
+					<SchedulePanel workspace={workspace} save={persist} />
+					<BackupTools save={persist} />
 					<div className="mobile-board-actions">
 						<span>
 							Local demo · Saved in this browser. No account or cloud sync.
@@ -916,6 +929,9 @@ export default function Planner() {
 			)}
 			{editing?.kind === "task" && goal && (
 				<TaskEditor
+					allTasks={workspace.goals.flatMap((g) =>
+						g.milestones.flatMap((m) => m.tasks),
+					)}
 					task={editing.task}
 					close={close}
 					save={(task) => {

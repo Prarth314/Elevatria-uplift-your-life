@@ -1537,3 +1537,276 @@ html {
 		animation: none !important;
 	}
 }
+
+/* Scheduling, review, and portable data tools */
+.scheduling-panel {
+	margin-top: 32px;
+	padding: 28px;
+	background: #fffefa;
+	border: 1px solid #dfe5d6;
+	border-radius: 10px;
+}
+.schedule-explainer,
+.field-help {
+	color: #68795d;
+	font-size: 12px;
+	line-height: 1.85;
+	margin: 12px 0 !important;
+}
+.scheduling-panel h3,
+.backup-tools h3 {
+	font: 22px "Playfair Display", Georgia, serif;
+	margin: 14px 0 8px;
+}
+.scheduling-panel summary {
+	cursor: pointer;
+	color: #415b37;
+	font-size: 13px;
+	padding: 14px 0;
+	font-weight: 500;
+}
+.availability-editor,
+.accepted-schedule,
+.scenario-panel,
+.schedule-history {
+	border-top: 1px solid #e1e6d7;
+	margin-top: 18px;
+}
+.scheduling-panel .editor-form {
+	max-width: 820px;
+}
+.scheduling-panel .editor-form input,
+.scheduling-panel select {
+	border: 1px solid #cad5be;
+	background: #f8faf3;
+	border-radius: 5px;
+	color: #354d2f;
+	padding: 9px;
+	font-size: 13px;
+	width: 100%;
+}
+.availability-row,
+.commitment-row {
+	border: 1px solid #dce4d2;
+	padding: 14px;
+	border-radius: 6px;
+	display: grid;
+	grid-template-columns: 1.5fr 1fr 1fr auto;
+	gap: 12px;
+	align-items: end;
+	min-width: 0;
+}
+.availability-row legend,
+.commitment-row legend,
+.dependency-editor legend {
+	font-size: 11px;
+	color: #5a714a;
+	padding: 0 6px;
+}
+.commitment-row {
+	grid-template-columns: 2fr 1.4fr 1fr 1fr;
+}
+.commitment-row > button {
+	grid-column: 1 / -1;
+	justify-self: end;
+}
+.schedule-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 18px 0;
+}
+.schedule-warning {
+	background: #fbf1dd;
+	border-left: 3px solid #b59a57;
+	color: #785a2f;
+	padding: 12px;
+	font-size: 12px;
+	margin: 12px 0 !important;
+}
+.proposal-review {
+	border: 1px solid #aabf97;
+	padding: 20px;
+	border-radius: 8px;
+	background: #f4f7ee;
+	margin-top: 20px;
+}
+.proposal-review > p,
+.scenario-panel > p,
+.schedule-stats {
+	font-size: 12px;
+	color: #627357;
+	line-height: 1.8;
+	margin: 10px 0 !important;
+}
+.session-list {
+	margin: 16px 0;
+	padding: 0;
+	list-style: none;
+	max-height: 500px;
+	overflow: auto;
+}
+.session-list li {
+	display: grid;
+	grid-template-columns: 180px 1fr 45px;
+	gap: 18px;
+	align-items: center;
+	padding: 13px 0;
+	border-bottom: 1px solid #e3e8da;
+	font-size: 12px;
+}
+.session-list strong {
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+.session-list small {
+	display: block;
+	font-size: 11px;
+	color: #758469;
+}
+.unscheduled-details ul,
+.change-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	max-height: 300px;
+	overflow: auto;
+}
+.unscheduled-details li,
+.change-list li {
+	padding: 12px 0;
+	border-top: 1px solid #e2e6d8;
+	font-size: 12px;
+}
+.unscheduled-details span,
+.change-list span,
+.change-list small {
+	display: block;
+	color: #748269;
+	font-size: 11px;
+	margin-top: 4px;
+	overflow-wrap: anywhere;
+}
+.scenario-panel > label {
+	display: block;
+	font-size: 12px;
+	margin-bottom: 12px;
+}
+.scenario-panel select {
+	display: block;
+	margin-top: 8px;
+}
+.backup-tools {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 25px;
+	padding: 25px;
+	border: 1px solid #dce3d2;
+	background: #eef3e6;
+	border-radius: 8px;
+}
+.backup-tools > div {
+	max-width: 620px;
+}
+.backup-tools p {
+	color: #6a7d5b;
+	font-size: 12px;
+	margin-top: 8px;
+}
+.backup-tools label {
+	cursor: pointer;
+	position: relative;
+}
+.backup-tools input:focus-visible {
+	position: static;
+	width: auto;
+	height: auto;
+	clip: auto;
+}
+.import-summary > div {
+	display: flex;
+	justify-content: space-between;
+	gap: 20px;
+	font-size: 13px;
+	padding: 8px 0;
+}
+.import-summary dd {
+	margin: 0;
+}
+.dependency-editor {
+	padding: 12px;
+	border: 1px solid #d9e1ce;
+	max-height: 240px;
+	overflow: auto;
+}
+.dependency-editor p {
+	font-size: 11px;
+	color: #697e5b;
+	margin-bottom: 12px;
+}
+.dependency-editor label {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin: 10px 0;
+}
+.dependency-editor input[type="checkbox"] {
+	width: 16px;
+	min-width: 16px;
+	height: 16px;
+	accent-color: #486e3b;
+}
+.schedule-nav {
+	display: block;
+	color: #4d6941 !important;
+	font-size: 12px;
+	padding: 14px 12px;
+}
+@media (max-width: 900px) {
+	.schedule-nav {
+		display: none;
+	}
+}
+@media (max-width: 670px) {
+	.scheduling-panel {
+		padding: 20px 15px;
+	}
+	.availability-row,
+	.commitment-row {
+		grid-template-columns: 1fr 1fr;
+		padding: 12px;
+		gap: 12px;
+	}
+	.availability-row > label:first-of-type {
+		grid-column: 1 / -1;
+	}
+	.availability-row > button {
+		grid-column: 1 / -1;
+	}
+	.session-list li {
+		grid-template-columns: 1fr 45px;
+		gap: 8px;
+	}
+	.session-list li > span:first-child {
+		grid-column: 1 / -1;
+	}
+	.proposal-review {
+		padding: 14px;
+	}
+	.backup-tools {
+		padding: 20px;
+	}
+	.scheduling-panel .editor-form input,
+	.scheduling-panel select {
+		font-size: 16px;
+	}
+	.schedule-actions > button {
+		width: 100%;
+	}
+	.scheduling-panel h2 {
+		font-size: 25px;
+	}
+}
