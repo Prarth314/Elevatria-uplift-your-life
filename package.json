@@ -1,18 +1,21 @@
 {
-  "name": "@caffeine/template-app",
+  "name": "elevatria-uplift-your-life",
   "type": "module",
   "engines": {
-    "node": ">=16.0.0",
-    "pnpm": ">=7.0.0",
-    "npm": "please use pnpm"
+    "node": ">=24",
+    "pnpm": ">=11"
   },
   "scripts": {
-    "build": "pnpm -r --if-present run build",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "check": "pnpm -r --if-present run check",
-    "fix": "pnpm -r --if-present run fix"
+    "dev": "node scripts/frontend.mjs dev",
+    "build": "node scripts/frontend.mjs build",
+    "preview": "node scripts/frontend.mjs preview",
+    "typecheck": "node scripts/frontend.mjs typecheck",
+    "test": "node --test tests/*.test.ts",
+    "audit": "node scripts/audit-source.mjs"
   },
   "devDependencies": {
     "sharp": "^0.34.4"
-  }
+  },
+  "private": true,
+  "packageManager": "pnpm@11.25.0"
 }
