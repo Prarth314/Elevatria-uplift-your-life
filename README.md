@@ -246,7 +246,51 @@ Created and developed by **[Prarth Gupta](https://github.com/Prarth314)**. Origi
 
 ---
 
+<div align="center">
+
+### Open source. Room to grow.
+
+[![MIT License](https://img.shields.io/badge/OPEN_SOURCE-MIT_LICENSE-365844?style=for-the-badge)](LICENSE)
+
+Free to use, modify, and share under the **[MIT License](LICENSE)**.<br />
+Keep the copyright and license notices with redistributed copies.
+
+</div>
+
+<details>
+<summary><strong>Read the full MIT License</strong></summary>
+
+```text
+MIT License
+
+Copyright (c) 2026
+Copyright (c) 2026 Prarth Gupta
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this
+permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+</details>
+
 <p align="center">
+  <sub>© 2026 Prarth Gupta · Original license and Caffeine attribution preserved.</sub><br />
+  <br />
   <em>Built for intention. Made for real life.</em><br />
   <sub>Elevatria — Uplift Your Life</sub>
 </p>
