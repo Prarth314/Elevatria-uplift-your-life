@@ -1,4 +1,8 @@
+import type { PlanningState } from "./schedule-types.ts";
+import { validPlanning } from "./schedule-validation.ts";
+import { dependencyErrors } from "./dependencies.ts";
 export interface Task {
+	dependsOn?: string[];
 	id: string;
 	title: string;
 	minutes: number;
@@ -10,6 +14,8 @@ export interface Milestone {
 	tasks: Task[];
 }
 export interface Goal {
+	priority?: 1 | 2 | 3;
+	category?: "project" | "learning" | "creative" | "custom";
 	id: string;
 	title: string;
 	description: string;
@@ -27,6 +33,7 @@ export interface VisionItem {
 	goalId: string;
 }
 export interface Workspace {
+	planning?: PlanningState;
 	version: 1;
 	goals: Goal[];
 	items: VisionItem[];
@@ -76,7 +83,8 @@ export function validWorkspace(value: unknown): value is Workspace {
 		!Array.isArray(value.goals) ||
 		!Array.isArray(value.items) ||
 		value.goals.length > 100 ||
-		value.items.length > 100
+		value.items.length > 100 ||
+		(value.planning !== undefined && !validPlanning(value.planning))
 	)
 		return false;
 	const ids = new Set<string>();
@@ -94,6 +102,11 @@ export function validWorkspace(value: unknown): value is Workspace {
 			g.weeklyHours > 80 ||
 			!text(g.constraints) ||
 			!["forest", "clay", "lavender"].includes(String(g.color)) ||
+			(g.priority !== undefined && ![1, 2, 3].includes(g.priority as number)) ||
+			(g.category !== undefined &&
+				!["project", "learning", "creative", "custom"].includes(
+					String(g.category),
+				)) ||
 			!Array.isArray(g.milestones) ||
 			g.milestones.length > 30
 		)
@@ -116,12 +129,19 @@ export function validWorkspace(value: unknown): value is Workspace {
 					!Number.isInteger(t.minutes) ||
 					t.minutes < 5 ||
 					t.minutes > 480 ||
-					typeof t.completed !== "boolean"
+					typeof t.completed !== "boolean" ||
+					(t.dependsOn !== undefined &&
+						(!Array.isArray(t.dependsOn) ||
+							t.dependsOn.length > 20 ||
+							!t.dependsOn.every(
+								(x) => typeof x === "string" && x.length <= 160,
+							)))
 				)
 					return false;
 			}
 		}
 	}
+	if (dependencyErrors(value as unknown as Workspace).length) return false;
 	const goalIds = new Set(value.goals.map((g) => g.id));
 	return value.items.every(
 		(i) =>
