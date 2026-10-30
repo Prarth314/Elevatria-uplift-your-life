@@ -1,3 +1,12 @@
+/** Accept either Supabase's new publishable key or legacy anon configuration, never conflicting values. */
+export function configuredPublicKey(
+	primary: unknown,
+	anon: unknown,
+): string | undefined {
+	if (primary && anon && primary !== anon) return undefined;
+	const value = primary || anon;
+	return publicKey(value) ? value : undefined;
+}
 export function serviceUrl(value: unknown, allowLocal = false): string | null {
 	if (
 		typeof value !== "string" ||

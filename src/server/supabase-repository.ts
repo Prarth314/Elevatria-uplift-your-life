@@ -1,4 +1,5 @@
 import {
+	configuredPublicKey,
 	serviceUrl,
 	publicKey,
 } from "../frontend/src/planner/service-config.ts";
@@ -17,10 +18,13 @@ export interface ServerConfig {
 }
 export function cloudConfig(): ServerConfig | null {
 	const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-	const publishableKey =
+	const publishableKey = configuredPublicKey(
 		process.env.SUPABASE_PUBLISHABLE_KEY ??
-		process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-	const secretKey = process.env.SUPABASE_SECRET_KEY;
+			process.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+		process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY,
+	);
+	const secretKey =
+		process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 	if (!url || !publishableKey || !secretKey) return null;
 	const origin = serviceUrl(url, process.env.NODE_ENV !== "production");
 	if (!origin || !publicKey(publishableKey)) return null;
@@ -173,7 +177,9 @@ export function supabaseDependencies(
 				typeof user !== "object" ||
 				user.is_anonymous === true ||
 				!Array.isArray(user.app_metadata?.providers) ||
-				!user.app_metadata.providers.includes("github")
+				!user.app_metadata.providers.some(
+					(provider) => provider === "google" || provider === "github",
+				)
 			)
 				return null;
 			return typeof user.id === "string" &&

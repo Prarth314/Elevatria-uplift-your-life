@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import productionHeaders from "./security-headers.json" with { type: "json" };
 import {
+	configuredPublicKey,
 	privilegedCredential,
 	publicKey,
 	serviceUrl,
@@ -61,10 +62,15 @@ export default defineConfig({
 						throw Error(
 							`Privileged credentials cannot be embedded in ${name}.`,
 						);
-				const key = config.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+				const key = configuredPublicKey(
+						config.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+						config.env.VITE_SUPABASE_ANON_KEY,
+					),
 					url = config.env.VITE_SUPABASE_URL;
 				if (
-					(key || url) &&
+					(config.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+						config.env.VITE_SUPABASE_ANON_KEY ||
+						url) &&
 					(!publicKey(key) || !serviceUrl(url, config.command === "serve"))
 				)
 					throw Error(

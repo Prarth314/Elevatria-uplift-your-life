@@ -99,7 +99,7 @@ The root commands work in Windows PowerShell and macOS/Linux shells. **No .env o
 
 ### Optional account storage
 
-The local demo remains available when no cloud project is configured. [CLOUD_SETUP.md](docs/CLOUD_SETUP.md) explains how to prepare a **Supabase Free** project, apply **both SQL migrations**, configure GitHub OAuth and run the local API. No paid plan is required by the application.
+The local demo remains available when no cloud project is configured. [CLOUD_SETUP.md](docs/CLOUD_SETUP.md) explains how to prepare a **Supabase Free** project, apply **both SQL migrations**, configure Google OAuth (or optional GitHub) and run the local API. No paid plan is required by the application.
 
 Copy [.env.example](.env.example) to an ignored .env only when configuring the integration. Public Supabase URL/publishable keys belong in the documented VITE_ variables; privileged keys belong only in server variables. The build guards recognizable privileged browser configuration. Do not paste secrets into chat, commit them, or store provider API keys in localStorage.
 
@@ -152,7 +152,7 @@ The API binds to 127.0.0.1:5176; Vite proxies /api to it. Restart both processes
 | Domain | Pure template generation, schema validation, weighted progress and dependency graph checks |
 | Scheduling | Deterministic earliest-deadline heuristic, global availability, timezone/DST handling, bounded Web Worker and independent invariant validator |
 | Local persistence | Versioned localStorage adapter with visible failures and cross-tab overwrite protection |
-| Optional cloud | Same-origin Node/Vercel API, verified Supabase GitHub identity, server-only PostgreSQL RPCs, optimistic revisions and shared account limits |
+| Optional cloud | Same-origin Node/Vercel API, verified Supabase Google/GitHub identity, server-only PostgreSQL RPCs, optimistic revisions and shared account limits |
 | Verification | Node test runner, PGlite PostgreSQL, TypeScript, package/source audits, immutable CI action pins |
 | Retained experiment | Inactive Motoko / Internet Computer source and generated bindings |
 
@@ -196,7 +196,7 @@ The local demo is **one unencrypted board per browser origin**, not an authorize
 
 ## Verification and security
 
-The current suite has **38 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
+The current suite has **40 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 

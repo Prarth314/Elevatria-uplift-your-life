@@ -282,3 +282,24 @@ test("local retry/reset persistence never stores account documents", () => {
 	assert.deepEqual(JSON.parse(values.get(WORKSPACE_KEY)!), local);
 	assert.equal(saveLocalWorkspace(storage, local, null), null);
 });
+
+test("Public key aliases accept anon configuration but reject conflicts and privileged keys", async () => {
+	const { configuredPublicKey } = await import(
+		"../src/frontend/src/planner/service-config.ts"
+	);
+	const anon = [
+		"eyJhbGciOiJIUzI1NiJ9",
+		Buffer.from(JSON.stringify({ role: "anon" })).toString("base64url"),
+		"synthetic",
+	].join(".");
+	assert.equal(configuredPublicKey(undefined, anon), anon);
+	assert.equal(configuredPublicKey(anon, anon), anon);
+	assert.equal(
+		configuredPublicKey("sb_publishable_abcdefghijklm", anon),
+		undefined,
+	);
+	assert.equal(
+		configuredPublicKey(undefined, "sb_" + "secret_" + "test"),
+		undefined,
+	);
+});

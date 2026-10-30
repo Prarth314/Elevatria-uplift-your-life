@@ -4,7 +4,7 @@ The local planner requires no account, API key, or backend. This integration add
 
 ## Status and verification boundary
 
-Implemented: GitHub OAuth/PKCE client flow using the official Supabase SDK; authenticated API; owner-derived access; PostgreSQL migration and row security; atomic revision checks; explicit load/save/delete controls; separate local/account state. The SDK keeps the tab's Auth session in sessionStorage. Application documents loaded from an account remain in memory and are not copied into the local demo store. Sign-out restores the separate local board.
+Implemented: Google/GitHub OAuth/PKCE client flow using the official Supabase SDK; authenticated API; owner-derived access; PostgreSQL migration and row security; atomic revision checks; explicit load/save/delete controls; separate local/account state. The SDK keeps the tab's Auth session in sessionStorage. Application documents loaded from an account remain in memory and are not copied into the local demo store. Sign-out restores the separate local board.
 
 Verified locally: TypeScript, service-level authorization tests, adapter contract tests, and execution of the migration/row-security tests against embedded PostgreSQL (PGlite). This does not verify a live Supabase project's gateway, OAuth configuration, email/identity settings, or a deployed Vercel function. No live project has been provisioned or connected by this change.
 
@@ -21,13 +21,18 @@ Do not stop after migration 001. Neither migration should be run against an unre
 
 The first cloud adapter stores one validated JSON workspace per account, capped at 1 MB by the API. That preserves the existing versioned local format and permits atomic replacement/import and optimistic concurrency. PostgreSQL stores ownership, revision and update time as columns. Tasks/assets are not yet normalized into separate tables. Base64 images consume document capacity; reduce images/history or keep a local backup when the cap is reached.
 
-## 2. Configure GitHub OAuth
+## 2. Configure Google authentication
 
-Enable GitHub under Supabase Authentication providers. Register a GitHub OAuth application with the callback URL shown by Supabase. Enter its credentials only in the provider configuration, never in source or browser storage.
+1. In Google Cloud Console, select/create a project and configure the OAuth consent screen for this app. If the consent screen remains in Testing, add the Google accounts that will test it. No paid Google API, billing upgrade or Calendar scope is required for sign-in.
+2. Create an OAuth client of type **Web application**. Add the appropriate application origins, including https://elevatria-website.vercel.app and the local origin you actually use.
+3. In Supabase Authentication → Sign In / Providers → Google, copy the callback URL shown by your project. Add that exact URL to Google's **Authorized redirect URIs**, typically https://YOUR-PROJECT.supabase.co/auth/v1/callback. This is the Google-to-Supabase callback; it is different from your application's return URL.
+4. Enter the Google client ID and client secret **only in Supabase's provider settings**, and enable Google. They do not belong in the frontend, Vercel public variables or this repository.
+5. In Supabase Authentication → URL Configuration, set Site URL to https://elevatria-website.vercel.app. Add exact return URLs: https://elevatria-website.vercel.app/ and http://127.0.0.1:5174/ for the documented local command. Add other local ports or preview URLs only if deliberately used; avoid broad production wildcards.
+6. Keep anonymous sign-in disabled. Enable only intended providers. GitHub is optional: its existing button requires enabling the GitHub provider separately; Google users do not need GitHub.
 
-Add the local application URL (for example `http://127.0.0.1:5174/`) to Supabase's allowed redirect URLs. Add an exact hosted URL only when deployment is separately authorized. OAuth returns to the application root; the SDK uses PKCE and handles the session exchange.
+The SDK performs the browser redirect, PKCE exchange and tab session refresh, returning to the application root. Google sign-in requests account selection and uses the provider's basic identity scopes; it does not request Calendar permissions. Provider initialization/redirect failures show retryable UI errors. Sign-out returns to the separate local demo.
 
-Official guide: [Supabase GitHub sign-in](https://supabase.com/docs/guides/auth/social-sign-in/auth-github).
+Official instructions: [Supabase Google sign-in](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [redirect URL configuration](https://supabase.com/docs/guides/auth/redirect-urls).
 
 ## 3. Configure local environment
 
@@ -35,13 +40,15 @@ Copy `.env.example` to `.env` in the repository root. Uncomment and supply:
 
 ```dotenv
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-public-publishable-key
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_PUBLISHABLE_KEY=your-public-publishable-key
+SUPABASE_ANON_KEY=your-public-anon-key
 SUPABASE_SECRET_KEY=your-server-only-secret-key
 ```
 
-The first two values are intentionally public. The secret key must remain server-only. The build rejects recognizable privileged credentials in every `VITE_` variable and requires a valid public Supabase key; this is a guard, not a substitute for checking environment configuration. `.env` is ignored by Git.
+The first two values are intentionally public. An anon key does not authorize arbitrary document access: both migrations keep browser roles denied, and the API verifies identity before server-only RPCs. The secret key must remain server-only. The build rejects recognizable privileged credentials in every `VITE_` variable and requires a valid public Supabase key; this is a guard, not a substitute for checking environment configuration. `.env` is ignored by Git.
+
+You may alternatively use VITE_SUPABASE_PUBLISHABLE_KEY and SUPABASE_PUBLISHABLE_KEY for new publishable keys. Use one public-key family; conflicting anon/publishable values are rejected. SUPABASE_SERVICE_ROLE_KEY is supported as a legacy server-only alias for SUPABASE_SECRET_KEY. Public URL/key configuration enables sign-in; cloud document operations also need the server secret and both migrations. An anon key alone is insufficient for this server-mediated storage architecture.
 
 New Supabase secret keys use `sb_secret_`; the adapter also supports legacy service-role JWTs. Live gateway behavior must be verified on the configured project before relying on the integration. Read [Supabase key guidance](https://supabase.com/docs/guides/getting-started/api-keys).
 
@@ -63,7 +70,7 @@ The API listens on `127.0.0.1:5176`; Vite proxies `/api` there. Restart both aft
 
 ## 5. Review the account workflow
 
-1. Sign in with GitHub. Signing in does not upload the local board.
+1. Continue with Google (or optional GitHub). Signing in does not upload the local board.
 2. To start, choose **Copy this board to cloud** and confirm. This creates a new revision only when no account board exists. Revision numbers are global and may contain gaps; do not assume the first account revision is 1.
 3. On another tab/device, choose **Load cloud board**, review, then open it.
 4. Edits to an account board stay in memory until **Save cloud board** is confirmed. Export unsaved work before leaving.
@@ -83,7 +90,7 @@ All responses use `Cache-Control: no-store`. Mutations accept only the documente
 
 Errors: 400 malformed input, 401 invalid session, 403 origin mismatch, 409 revision conflict, 413 size limit, 415 unsupported body format, 422 domain validation, 429 rate limit, 502 invalid upstream data, 503 unavailable/unconfigured infrastructure. Errors include a request ID and never return tokens or provider errors verbatim.
 
-After migration 002, browser roles cannot read or write workspace tables or execute any workspace RPC. All access passes through the same-origin API. The server verifies a non-anonymous GitHub-backed identity with Supabase Auth and derives the owner from that response. Service credentials are never sent to the browser. Changes to this boundary require corresponding SQL and two-user tests.
+After migration 002, browser roles cannot read or write workspace tables or execute any workspace RPC. All access passes through the same-origin API. The server verifies a non-anonymous Google- or GitHub-backed identity with Supabase Auth and derives the owner from that response. Service credentials are never sent to the browser. Changes to this boundary require corresponding SQL and two-user tests.
 
 The database enforces 60 valid workspace operations per account per minute across API instances. A bounded process-local throttle also limits requests to 120 per observed IP per minute; this is supplementary and does not provide global denial-of-service protection. Provider Auth traffic and invalid requests still require platform/free-plan quota review before hosting.
 
@@ -104,3 +111,9 @@ Use exact allowed OAuth redirect URLs, disable anonymous registration, enable on
 - Validate Vercel function routing and environment separation in a separately authorized deployment.
 
 There is no guarantee of unlimited free operation, continuous service availability, or production readiness.
+
+## Activation checklist — wait for your project values
+
+The framework is prepared; no project has been connected and real Google consent/refresh/storage behavior has not been verified. Add the URL/public key and server secret directly to your ignored local .env or Vercel project settings, never chat. For Vercel, select the intended environment and redeploy after saving values because VITE_ variables are embedded at build time.
+
+After setup, test Google login and denial/cancellation, reload, refresh/expiry, sign-out, two real accounts, save/load/delete, revision conflicts and account switching. Verify that local demo data remains separate. Export unsaved account work before leaving. Do not treat passing synthetic identity tests as proof of a live provider configuration.

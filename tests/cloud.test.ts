@@ -222,7 +222,7 @@ test("Supabase adapter uses verified IDs and privileged headers only on the serv
 	);
 });
 
-test("Supabase adapter rejects anonymous/non-GitHub identities, malformed replies, and shared rate-limit errors", async () => {
+test("Supabase adapter rejects anonymous/unsupported identities, malformed replies, and shared rate-limit errors", async () => {
 	const config = {
 		url: "https://example.supabase.co",
 		publishableKey: "test-public",
@@ -264,4 +264,34 @@ test("Supabase adapter rejects anonymous/non-GitHub identities, malformed replie
 			{ status: 400 },
 		)) as typeof fetch);
 	await assert.rejects(() => throttled.repository.read("owner"), status(429));
+});
+
+test("Google identities are verified by Auth; anonymous and user-metadata provider spoofing are rejected", async () => {
+	const config = {
+		url: "https://example.supabase.co",
+		publishableKey: "test-public",
+		secretKey: "test-secret",
+	};
+	const id = "11111111-1111-4111-8111-111111111111";
+	for (const provider of ["google", "github"]) {
+		const deps = supabaseDependencies(config, (async () =>
+			Response.json({
+				id,
+				is_anonymous: false,
+				app_metadata: { providers: [provider] },
+			})) as typeof fetch);
+		assert.equal(await deps.authenticate("synthetic-token"), id);
+	}
+	for (const identity of [
+		{ id, is_anonymous: true, app_metadata: { providers: ["google"] } },
+		{
+			id,
+			user_metadata: { providers: ["google"] },
+			app_metadata: { providers: ["email"] },
+		},
+	]) {
+		const deps = supabaseDependencies(config, (async () =>
+			Response.json(identity)) as typeof fetch);
+		assert.equal(await deps.authenticate("synthetic-token"), null);
+	}
 });

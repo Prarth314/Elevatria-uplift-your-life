@@ -1,5 +1,5 @@
 import { normalizeImageData } from "./images";
-import { publicKey, serviceUrl } from "./service-config";
+import { configuredPublicKey, publicKey, serviceUrl } from "./service-config";
 import { CloudEpoch, mayReplaceAfterSave } from "./cloud-state";
 import { useEffect, useRef, useState } from "react";
 import type { SupabaseClient, Session } from "@supabase/supabase-js";
@@ -7,7 +7,10 @@ import type { Workspace, VisionItem } from "./model.ts";
 import { validWorkspace } from "./model.ts";
 import { Editor } from "./Editors";
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+const key = configuredPublicKey(
+	import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+	import.meta.env.VITE_SUPABASE_ANON_KEY,
+);
 function publicConfigValid() {
 	return !!serviceUrl(url, import.meta.env.DEV) && publicKey(key);
 }
@@ -239,7 +242,7 @@ export default function CloudPanel({
 				<div className="eyebrow">OPTIONAL ACCOUNT STORAGE</div>
 				<h3>Local by default. Cloud when configured.</h3>
 				<p>
-					Account sign-in is not configured for this installation. All planning,
+					Google and GitHub sign-in are not configured yet. All planning,
 					scheduling, scenarios, and file exports work locally without an
 					account or paid API.
 				</p>
@@ -268,24 +271,34 @@ export default function CloudPanel({
 			<p role="status">{busy ? "Working…" : message}</p>
 			<div className="schedule-actions">
 				{!session ? (
-					<button
-						className="primary-button"
-						disabled={!client || busy}
-						onClick={() =>
-							void run(async () => {
-								const result = await client!.auth.signInWithOAuth({
-									provider: "github",
-									options: { redirectTo: window.location.origin + "/" },
-								});
-								if (result.error)
-									throw Error(
-										"GitHub sign-in could not start. Check the configured OAuth provider and redirect URLs.",
-									);
-							})
-						}
-					>
-						Sign in with GitHub
-					</button>
+					(["google", "github"] as const).map((provider) => (
+						<button
+							key={provider}
+							className="primary-button"
+							disabled={!client || busy}
+							onClick={() =>
+								void run(async () => {
+									const result = await client!.auth.signInWithOAuth({
+										provider,
+										options: {
+											redirectTo: window.location.origin + "/",
+											...(provider === "google"
+												? { queryParams: { prompt: "select_account" } }
+												: {}),
+										},
+									});
+									if (result.error)
+										throw Error(
+											"Sign-in could not start. Check the configured provider and redirect URLs, then retry.",
+										);
+								})
+							}
+						>
+							{provider === "google"
+								? "Continue with Google"
+								: "Continue with GitHub"}
+						</button>
+					))
 				) : (
 					<>
 						<button
