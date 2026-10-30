@@ -196,7 +196,7 @@ The local demo is **one unencrypted board per browser origin**, not an authorize
 
 ## Verification and security
 
-The current suite has **37 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
+The current suite has **38 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 

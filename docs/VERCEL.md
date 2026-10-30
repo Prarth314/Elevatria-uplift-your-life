@@ -30,6 +30,12 @@ The Vite configuration was reading vercel.json and assuming its headers array re
 
 The regression fixture recreates the exact exception with a headerless platform config. It now loads successfully with both a headerless and an absent vercel.json, without changing the real repository configuration. The project root was corrected from src/frontend to the repository root, and Node was aligned to the tested 24.x line.
 
+## Serverless TypeScript configuration
+
+The first corrected frontend build reached Ready, but a real API request exposed a second deployment issue: the old repository-root tsconfig.json emitted CommonJS and rejected explicit .ts imports. Vercel reported TS5097 diagnostics and the deployed function returned FUNCTION_INVOCATION_FAILED.
+
+The root compiler configuration now extends the server's checked types, uses NodeNext ESM to match the package's module type, and rewrites relative TypeScript import extensions to JavaScript on emission. Generated local server output stays under ignored artifacts. A deployment regression compiles the full API dependency graph with this configuration, imports the emitted JavaScript, invokes the handler and verifies structured 401/no-store behavior.
+
 ## Verify a deployment
 
 1. Push to main. Open the new Vercel deployment for that exact commit, rather than redeploying an old SHA.

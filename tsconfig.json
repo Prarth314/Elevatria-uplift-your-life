@@ -1,11 +1,12 @@
 {
+  "extends": "./tsconfig.server.json",
   "compilerOptions": {
-    "strict": true,
-    "target": "ES2020",
-    "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
-    "moduleResolution": "node",
-    "allowJs": true,
-    "outDir": "HACK_BECAUSE_OF_ALLOW_JS"
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": ".",
+    "outDir": "./artifacts/server"
   }
 }
