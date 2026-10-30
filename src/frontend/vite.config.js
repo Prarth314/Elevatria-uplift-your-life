@@ -1,17 +1,13 @@
-import { readFileSync } from "node:fs";
 import { fileURLToPath, URL } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import productionHeaders from "./security-headers.json" with { type: "json" };
 import {
 	privilegedCredential,
 	publicKey,
 	serviceUrl,
 } from "./src/planner/service-config.ts";
-const productionHeaders = Object.fromEntries(
-	JSON.parse(
-		readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"),
-	).headers[0].headers.map(({ key, value }) => [key, value]),
-);
+// Keep build configuration independent of the hosting platform's normalized config file.
 let approvedConnect = "";
 let production = false;
 export default defineConfig({

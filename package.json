@@ -2,7 +2,7 @@
   "name": "elevatria-uplift-your-life",
   "type": "module",
   "engines": {
-    "node": ">=24",
+    "node": "24.x",
     "pnpm": ">=11"
   },
   "scripts": {

@@ -11,7 +11,7 @@ Vision board → editable plans → realistic schedules → progress → reviewe
 [![Verify frontend](https://github.com/Prarth314/Elevatria-uplift-your-life/actions/workflows/ci.yml/badge.svg)](https://github.com/Prarth314/Elevatria-uplift-your-life/actions/workflows/ci.yml)
 ![React 19](https://img.shields.io/badge/React-19-365844?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-526b45?style=flat-square)
-![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-73865f?style=flat-square)
+![Node.js 24](https://img.shields.io/badge/Node.js-24.x-73865f?style=flat-square)
 [![MIT License](https://img.shields.io/badge/License-MIT-a18b65?style=flat-square)](LICENSE)
 
 [Explore the workflow](#the-workflow) · [Run locally](#quick-start) · [Architecture](#under-the-surface) · [Security](docs/SECURITY_AUDIT.md)
@@ -63,7 +63,7 @@ The included **Build an AI study assistant** example has three milestones, nine 
 
 | Tool | Version |
 | :--- | :--- |
-| Node.js | **24 or newer** |
+| Node.js | **24.x** |
 | pnpm | **11.25.0**, pinned in package.json |
 | Git | To clone the source |
 
@@ -196,7 +196,7 @@ The local demo is **one unencrypted board per browser origin**, not an authorize
 
 ## Verification and security
 
-The current suite has **35 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
+The current suite has **37 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 
@@ -204,7 +204,7 @@ These checks do not establish production readiness. No live Supabase OAuth, host
 
 ## Hosting and next steps
 
-The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies static routing and security headers; api/workspace.ts requires a Node serverless function only when account storage is enabled. Supabase is a separate optional backend. No public deployment has been performed. Free service limits and availability must be reviewed before connecting real users; unlimited free operation is not promised.
+The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies static routing and security headers; api/workspace.ts requires a Node serverless function only when account storage is enabled. Supabase is a separate optional backend. See [Vercel setup and deployment verification](docs/VERCEL.md). Free service limits and availability must be reviewed before connecting real users; unlimited free operation is not promised.
 
 - [x] **Core workflow:** visual boards, editable plans, progress, sample project, persistence and responsive editing.
 - [x] **Local scheduling:** dependency-aware proposals, scenarios, acceptance, history and file portability.
@@ -217,6 +217,7 @@ The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies st
 
 - [Original codebase assessment](docs/ASSESSMENT.md) — historical inspection of the starting export.
 - [Architecture](docs/ARCHITECTURE.md) — boundaries and backend tradeoffs.
+- [Vercel hosting](docs/VERCEL.md) — correct repository root, build settings and troubleshooting.
 - [Cloud setup](docs/CLOUD_SETUP.md) — optional, free-service development steps.
 - [Security audit](docs/SECURITY_AUDIT.md) — findings and remaining verification.
 - [Verification](docs/VERIFICATION.md) — checks actually performed.
