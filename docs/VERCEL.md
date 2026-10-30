@@ -55,4 +55,15 @@ Optional account storage requires a separate free Supabase project, both SQL mig
 - **No cloud account controls:** expected without valid public Supabase configuration. Local planning remains available.
 - **API 401/503:** expected for missing authentication/unconfigured cloud. Do not weaken authorization to make a smoke test return 200.
 
-Verification of a successful hosted build and the main browser flow is recorded after deployment. Provider OAuth, account storage and Google Calendar sync remain separately unverified until configured and tested.
+## Hosted verification — October 30, 2026
+
+The connected Hobby project successfully deployed the corrected application at [elevatria-website.vercel.app](https://elevatria-website.vercel.app). The code-fix deployment of a9f831f reached Ready with clean build diagnostics, and its GitHub Actions run passed all 38 tests, frontend/server type checks, production build and audit gates.
+
+Verified against the production domain:
+
+- / and /dashboard return 200 with the Elevatria document title and the intended CSP, anti-framing, nosniff and referrer policies.
+- /api/workspace returns structured JSON: 401 AUTH_REQUIRED without a token, 503 CLOUD_NOT_CONFIGURED for a syntactically valid synthetic token, and 403 ORIGIN_REJECTED for an untrusted origin. Responses are no-store; no authenticated provider call was needed.
+- Browser goal edits survive reload. Keyboard task completion updates weighted progress. The background worker generates a proposal under production CSP, and accepted sessions survive reload. Synthetic edits were restored to the sample.
+- The hosted browser console error query returned no entries.
+
+Supabase remains unconfigured. OAuth, real cloud-user isolation, provider storage and Calendar sync are not claimed as verified. No paid integration or plan upgrade was enabled.

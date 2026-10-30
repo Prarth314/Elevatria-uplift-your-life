@@ -14,7 +14,7 @@ Vision board → editable plans → realistic schedules → progress → reviewe
 ![Node.js 24](https://img.shields.io/badge/Node.js-24.x-73865f?style=flat-square)
 [![MIT License](https://img.shields.io/badge/License-MIT-a18b65?style=flat-square)](LICENSE)
 
-[Explore the workflow](#the-workflow) · [Run locally](#quick-start) · [Architecture](#under-the-surface) · [Security](docs/SECURITY_AUDIT.md)
+[Visit Elevatria](https://elevatria-website.vercel.app) · [Explore the workflow](#the-workflow) · [Run locally](#quick-start) · [Architecture](#under-the-surface) · [Security](docs/SECURITY_AUDIT.md)
 
 </div>
 
@@ -200,7 +200,7 @@ The current suite has **38 passing tests** covering schedule constraints/randomi
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 
-These checks do not establish production readiness. No live Supabase OAuth, hosted API, external AI, Google Calendar write or Motoko deployment has been verified.
+These checks do not establish production readiness. Live Supabase OAuth/storage, external AI, Google Calendar writes and Motoko deployment remain unverified. Hosted routing and anonymous/unconfigured API responses are verified; see the [deployment record](docs/VERCEL.md).
 
 ## Hosting and next steps
 
