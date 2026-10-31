@@ -1,3 +1,5 @@
+import { repairSchedule } from "./recovery.ts";
+import type { RepairOptions } from "./recovery.ts";
 import { generateSchedule } from "./scheduler.ts";
 import { validWorkspace } from "./model.ts";
 import { settingsErrors } from "./schedule-validation.ts";
@@ -11,7 +13,7 @@ scope.onmessage = (event) => {
 	try {
 		const data = event.data;
 		if (
-			!plain(data, ["workspace", "settings", "now"]) ||
+			!plain(data, ["workspace", "settings", "now", "repair"]) ||
 			!validWorkspace(data.workspace) ||
 			!plain(data.settings, [
 				"timezone",
@@ -26,11 +28,18 @@ scope.onmessage = (event) => {
 		)
 			throw Error("Scheduling inputs are invalid or exceed supported limits.");
 		scope.postMessage({
-			schedule: generateSchedule(
-				data.workspace,
-				data.settings as unknown as ScheduleSettings,
-				data.now,
-			),
+			schedule: data.repair
+				? repairSchedule(
+						data.workspace,
+						data.settings as unknown as ScheduleSettings,
+						data.repair as RepairOptions,
+						data.now,
+					)
+				: generateSchedule(
+						data.workspace,
+						data.settings as unknown as ScheduleSettings,
+						data.now,
+					),
 		});
 	} catch (error) {
 		scope.postMessage({

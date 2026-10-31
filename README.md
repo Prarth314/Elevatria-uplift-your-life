@@ -178,7 +178,7 @@ docs/                              Setup, decisions, audit and verification
 
 The scheduler checks durations, shared windows, fixed commitments, deadlines, weekly goal budgets, breaks and prerequisite completion. It splits long tasks across sessions and explains remaining work. Nonexistent DST wall times are skipped with a warning; repeated times choose the earlier occurrence. The heuristic **does not prove optimality or infeasibility of every alternative arrangement**.
 
-Replanning recomputes unfinished work from now and requires review before replacement. It does not yet preserve manually locked slots, minimize disruption, infer completion, or interpret free-text constraints. Accepted history is bounded. Weekly focus remains a simpler ordered budget view; it is distinct from the scheduler.
+Replanning recomputes unfinished work from now and requires review before replacement. The **My week changed** workflow supports reduced hours, changed availability, revised estimates and later deadlines. It protects selected tasks’ existing sessions for that repair and greedily retains other feasible whole-task allocations. Acceptance is explicit; undo restores the previous board during the same session unless newer edits exist. It does not prove a globally minimal repair, infer completion, interpret free-text constraints or persist individual session locks. Accepted history is bounded. Weekly focus remains a simpler ordered budget view; it is distinct from the scheduler.
 
 The original Motoko backend has no goal/task API and depends on separate platform tooling. Keeping it inactive lets the web application remain Vercel-compatible while the conventional API provides testable ownership and concurrency boundaries. Legacy shell deployment entry points stop immediately; no canister is provisioned. See [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -187,7 +187,7 @@ The original Motoko backend has no goal/task API and depends on separate platfor
 | Area | Implemented | Remaining |
 | :--- | :--- | :--- |
 | Planning | Editable category templates, goals, milestones, tasks and dependencies | Optional server AI with validated responses |
-| Scheduling | Availability, timezone, deadlines, breaks, task splitting and reviewed proposals | Optimal search, session locks and minimal-disruption repair |
+| Scheduling | Availability, timezone, deadlines, breaks, task splitting and reviewed proposals | Optimal search and persistent individual-session locks |
 | Account storage | Optional PKCE SDK, authenticated API, SQL permissions/revisions and explicit load/save/delete | Real OAuth/two-account/hosted verification, account deletion and operational policy |
 | Portability | Reviewed JSON restore and stable-UID ICS download | Google Calendar remote sync, idempotent reconciliation and failure recovery |
 | Security | Strict boundaries, resource limits, CSP, dependency/source CI checks | Live platform assessment and independent review before public account access |
@@ -196,7 +196,7 @@ The local demo is **one unencrypted board per browser origin**, not an authorize
 
 ## Verification and security
 
-The current suite has **40 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
+The current suite has **46 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 

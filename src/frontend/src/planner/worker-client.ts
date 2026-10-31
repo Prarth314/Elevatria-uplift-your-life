@@ -1,3 +1,4 @@
+import type { RepairOptions } from "./recovery.ts";
 import type { Workspace } from "./model.ts";
 import type { Schedule, ScheduleSettings } from "./schedule-types.ts";
 import { validPlanning } from "./schedule-validation.ts";
@@ -5,6 +6,7 @@ export function computeSchedule(
 	workspace: Workspace,
 	settings: ScheduleSettings,
 	signal: AbortSignal,
+	repair?: RepairOptions,
 ): Promise<Schedule> {
 	if (typeof Worker === "undefined")
 		return Promise.reject(
@@ -67,6 +69,7 @@ export function computeSchedule(
 			workspace: { version: 1, goals: workspace.goals, items: [] },
 			settings,
 			now: new Date().toISOString(),
+			repair,
 		});
 	});
 }

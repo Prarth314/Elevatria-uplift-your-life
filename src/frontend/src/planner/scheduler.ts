@@ -92,6 +92,7 @@ export function generateSchedule(
 	workspace: Workspace,
 	settings: ScheduleSettings,
 	nowISO = new Date().toISOString(),
+	fixed: Session[] = [],
 ): Schedule {
 	const now = Date.parse(nowISO);
 	if (!Number.isFinite(now)) throw Error("The scheduling clock is invalid.");
@@ -104,13 +105,71 @@ export function generateSchedule(
 		throw Error("Scheduling supports at most 1,000 tasks per workspace.");
 	const order = new Map(tasks.map((task, index) => [task.id, index]));
 	const { slots, warnings } = availableSlots(settings, now);
-	const sessions: Session[] = [],
+	const sessions: Session[] = fixed.map((s) => ({ ...s })),
 		unscheduled: Unscheduled[] = [];
 	const finish = new Map(
 		tasks.filter((t) => t.completed).map((t) => [t.id, now]),
 	);
 	const processed = new Set(finish.keys()),
 		weekly = new Map<string, number>();
+	const fixedTasks = new Map<string, Session[]>();
+	for (const session of sessions) {
+		const list = fixedTasks.get(session.taskId) ?? [];
+		list.push(session);
+		fixedTasks.set(session.taskId, list);
+	}
+	for (const [id, group] of fixedTasks) {
+		const task = tasks.find((t) => t.id === id);
+		if (
+			!task ||
+			task.completed ||
+			group.reduce(
+				(n, s) => n + (Date.parse(s.end) - Date.parse(s.start)) / minute,
+				0,
+			) !== task.minutes
+		)
+			throw Error(
+				"Protected work changed or is partially missed. Unprotect it before repairing.",
+			);
+		for (const session of group) {
+			const start = Date.parse(session.start),
+				end = Date.parse(session.end),
+				date = dateAt(start, settings.timezone);
+			if (
+				!slots.some((slot) => start >= slot.start && end <= slot.end) ||
+				date > task.goal.targetDate
+			)
+				throw Error(
+					"A protected session no longer fits availability or its deadline. Unprotect it or adjust the constraint.",
+				);
+			const key = task.goal.id + ":" + weekOf(date);
+			weekly.set(key, (weekly.get(key) ?? 0) + (end - start) / minute);
+			if (weekly.get(key)! > task.goal.weeklyHours * 60)
+				throw Error(
+					"Protected work exceeds the weekly budget. Unprotect a task or increase available hours.",
+				);
+		}
+	}
+	const reserve = (start: number, end: number) => {
+		const pieces = slots.flatMap((slot) =>
+			end + settings.breakMinutes * minute <= slot.start ||
+			start - settings.breakMinutes * minute >= slot.end
+				? [slot]
+				: [
+						{
+							...slot,
+							end: Math.min(slot.end, start - settings.breakMinutes * minute),
+						},
+						{
+							...slot,
+							start: Math.max(slot.start, end + settings.breakMinutes * minute),
+						},
+					].filter((x) => x.end > x.start),
+		);
+		slots.splice(0, slots.length, ...pieces);
+	};
+	for (const session of sessions)
+		reserve(Date.parse(session.start), Date.parse(session.end));
 	const pending = tasks.filter((t) => !t.completed);
 	while (pending.length) {
 		const eligible = pending
@@ -131,6 +190,10 @@ export function generateSchedule(
 		);
 		processed.add(task.id);
 		if ((task.dependsOn ?? []).some((id) => !finish.has(id))) {
+			if (fixedTasks.has(task.id))
+				throw Error(
+					"A prerequisite cannot finish before protected work. Unprotect it or change the plan.",
+				);
 			unscheduled.push({
 				taskId: task.id,
 				title: task.title,
@@ -143,6 +206,17 @@ export function generateSchedule(
 			now,
 			...(task.dependsOn ?? []).map((id) => finish.get(id)!),
 		);
+		if (fixedTasks.has(task.id)) {
+			const group = fixedTasks
+				.get(task.id)!
+				.sort((a, b) => a.start.localeCompare(b.start));
+			if (Date.parse(group[0].start) < earliest)
+				throw Error(
+					"A prerequisite finishes after protected work starts. Unprotect it to repair the plan.",
+				);
+			finish.set(task.id, Date.parse(group[group.length - 1].end));
+			continue;
+		}
 		let remaining = task.minutes,
 			lastEnd = earliest;
 		for (const slot of slots) {

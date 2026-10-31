@@ -1,3 +1,4 @@
+import { RecoveryPanel } from "./RecoveryPanel";
 import { computeSchedule } from "./worker-client";
 import { useEffect, useState, useRef, useMemo } from "react";
 import type { Workspace } from "./model.ts";
@@ -39,6 +40,12 @@ export function SchedulePanel({
 		() => workspace.planning?.settings ?? defaultSettings(),
 	);
 	const [proposal, setProposal] = useState<Schedule | null>(null);
+	const [recoveryDraft, setRecoveryDraft] = useState<Workspace | null>(null);
+	const recoveryBase = useRef<Workspace | null>(null);
+	const [undo, setUndo] = useState<{
+		before: Workspace;
+		after: Workspace;
+	} | null>(null);
 	const [scenario, setScenario] = useState<Schedule | null>(null);
 	const [scenarioKind, setScenarioKind] = useState("half");
 	const [error, setError] = useState("");
@@ -49,6 +56,7 @@ export function SchedulePanel({
 	useEffect(() => {
 		setSettings(workspace.planning?.settings ?? defaultSettings());
 		setProposal(null);
+		setRecoveryDraft(null);
 		setScenario(null);
 	}, [workspace.planning?.settings]);
 	const accepted = workspace.planning?.accepted;
@@ -99,6 +107,7 @@ export function SchedulePanel({
 		setComputing(true);
 		try {
 			if (dirty) throw Error("Save availability before generating a proposal.");
+			setRecoveryDraft(null);
 			setProposal(
 				await computeSchedule(workspace, settings, controller.signal),
 			);
@@ -115,10 +124,15 @@ export function SchedulePanel({
 	}
 	function accept() {
 		if (!proposal) return;
+		const target = recoveryDraft ?? workspace;
 		try {
+			if (recoveryDraft && recoveryBase.current !== workspace)
+				throw Error(
+					"Your board changed after this recovery proposal. Generate recovery again to preserve newer edits.",
+				);
 			if (
-				dirty ||
-				proposal.inputRevision !== inputRevision(workspace, settings)
+				(dirty && !recoveryDraft) ||
+				proposal.inputRevision !== inputRevision(target, settings)
 			)
 				throw Error(
 					"This proposal is stale. Generate again using the latest goals and availability.",
@@ -127,26 +141,29 @@ export function SchedulePanel({
 				throw Error(
 					"A proposed session is already in the past. Generate a fresh proposal.",
 				);
-			const errors = scheduleViolations(workspace, settings, proposal);
+			const errors = scheduleViolations(target, settings, proposal);
 			if (errors.length) throw Error(errors.join(" "));
-			const applied = save(
-				{
-					...workspace,
-					planning: {
-						settings,
-						accepted: proposal,
-						history: [
-							...(accepted ? [accepted] : []),
-							...(workspace.planning?.history ?? []),
-						].slice(0, 10),
-					},
+			const next: Workspace = {
+				...target,
+				planning: {
+					settings,
+					accepted: proposal,
+					history: [
+						...(accepted ? [accepted] : []),
+						...(workspace.planning?.history ?? []),
+					].slice(0, 10),
 				},
+			};
+			const applied = save(
+				next,
 				"Schedule accepted. Previous accepted versions remain in history.",
 			);
 			if (!applied)
 				throw Error(
 					"The schedule exceeds board or history limits. Your previous schedule is unchanged.",
 				);
+			setUndo({ before: workspace, after: next });
+			setRecoveryDraft(null);
 			setProposal(null);
 			setError("");
 			setMessage(
@@ -627,6 +644,48 @@ export function SchedulePanel({
 					Download calendar (.ics)
 				</button>
 			</div>
+			<RecoveryPanel
+				onInvalidate={() => {
+					setProposal(null);
+					setRecoveryDraft(null);
+				}}
+				workspace={workspace}
+				settings={settings}
+				onProposal={(next, schedule) => {
+					recoveryBase.current = workspace;
+					setRecoveryDraft(next);
+					setProposal(schedule);
+					setError("");
+					setMessage(
+						"Recovery proposal only. Review changes before accepting. Protected task sessions are fixed for this proposal.",
+					);
+				}}
+			/>
+			{undo && (
+				<button
+					className="quiet-button"
+					disabled={workspace !== undo.after}
+					onClick={() => {
+						if (workspace !== undo.after) return;
+						if (save(undo.before, "Previous board and schedule restored.")) {
+							setUndo(null);
+							setProposal(null);
+							setRecoveryDraft(null);
+							setMessage(
+								"Recovery undone. Previous goals, availability and schedule restored.",
+							);
+						}
+					}}
+				>
+					Undo last accepted change (this session)
+				</button>
+			)}
+			{undo && workspace !== undo.after && (
+				<p className="field-help">
+					Undo is unavailable after further board edits, to avoid overwriting
+					newer work.
+				</p>
+			)}
 			{stale && (
 				<p className="schedule-warning">
 					Your goals or availability have changed since acceptance. Existing
@@ -638,10 +697,58 @@ export function SchedulePanel({
 				<section className="proposal-review" aria-label="Schedule proposal">
 					<h3>Review before committing</h3>
 					<p>
-						{changes.length} tasks have a different allocation. This recomputes
-						unfinished work from now; it does not automatically mark missed work
-						complete or preserve manually locked sessions.
+						{changes.length} tasks have a different allocation.{" "}
+						{recoveryDraft
+							? "Protected work stays fixed. Other sessions are retained where feasible. Review every change before accepting."
+							: "This creates a fresh allocation from now. Use My week changed to preserve commitments."}{" "}
+						Missed work is never automatically completed.
 					</p>
+					{recoveryDraft && (
+						<div className="schedule-warning">
+							<strong>Goal changes applied only on acceptance</strong>
+							<ul>
+								{recoveryDraft.goals.map((g) => {
+									const old = workspace.goals.find((x) => x.id === g.id);
+									if (!old) return null;
+									return (
+										<li key={g.id}>
+											{g.title}: weekly hours {old.weeklyHours} →{" "}
+											{g.weeklyHours}; target {old.targetDate} → {g.targetDate}
+										</li>
+									);
+								})}
+							</ul>
+							<ul>
+								{recoveryDraft.goals
+									.flatMap((g) => g.milestones.flatMap((m) => m.tasks))
+									.flatMap((t) => {
+										const old = workspace.goals
+											.flatMap((g) => g.milestones.flatMap((m) => m.tasks))
+											.find((x) => x.id === t.id);
+										return old && old.minutes !== t.minutes
+											? [
+													<li key={t.id}>
+														{t.title}: {old.minutes} → {t.minutes} minutes
+													</li>,
+												]
+											: [];
+									})}
+							</ul>
+							<p>
+								Task estimates and unsaved availability included in this
+								recovery will also be applied. Discarding keeps the accepted
+								board unchanged.
+							</p>
+						</div>
+					)}
+					{proposal.unscheduled.length > 0 && (
+						<p className="schedule-warning">
+							Some work still needs a place. Review the reasons below, then
+							reduce scope, add work windows, raise a goal’s weekly budget, or
+							extend its deadline. This heuristic does not prove that every
+							alternative is impossible.
+						</p>
+					)}
 					{renderSchedule(proposal)}
 					<details>
 						<summary>Compare with accepted version</summary>
@@ -667,6 +774,7 @@ export function SchedulePanel({
 							className="quiet-button"
 							onClick={() => {
 								setProposal(null);
+								setRecoveryDraft(null);
 								setMessage("Proposal discarded. Accepted schedule unchanged.");
 							}}
 						>

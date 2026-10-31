@@ -1832,3 +1832,5 @@ html {
 	font-size: 11px;
 	overflow-wrap: anywhere;
 }
+
+.scenario-panel input[type="number"] { width: 100%; max-width: 22rem; padding: .7rem; border: 1px solid #d9dfd2; border-radius: .5rem; background: transparent; color: inherit; font: inherit; }
