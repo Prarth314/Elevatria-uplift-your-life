@@ -36,6 +36,8 @@ The tests now cover direct scheduler invariants, seeded random DAGs, an independ
 
 ## Built-browser record
 
+The measured code commit is `f200a16f91221d13281d1585284ae1e2ae063ab0`; the checked-in benchmark report records a clean tree and source hash.
+
 Only synthetic plans and the included sample were used on a loopback production preview with the intended CSP. The synthetic test board was restored to the sample afterward.
 
 - Created a second goal, generated its editable plan and scheduled competing goals using Monday work windows. Opened placement details and inspected explicit unplaced minutes and heuristic caveats.
@@ -44,7 +46,7 @@ Only synthetic plans and the included sample were used on a loopback production 
 - Reproduced and fixed date loss when changing the date before another field; final built editor saved November 15 and three hours together correctly.
 - Downloaded real JSON and ICS through UI controls. Independently parsed both, validated the board/allocation, counted ten unique events and compared each event to the reviewed accepted schedule. Restored the JSON through the visible preview.
 - A second tab changed a synthetic goal; the first displayed working/saved export and reload options. The latest build also saved through Web Locks and survived reload. Automated queued-concurrency tests exercise the no-event-arrived case and unsupported/rejected coordination.
-- Desktop 1440×1000 and mobile 390×844 had no page-wide horizontal overflow (1425/375 CSS content widths excluding scrollbars). Core fields had native labels or accessible names. Mobile goal/task/proposal controls were inspected. Reduced motion support exists in CSS; OS screen-reader compatibility and every contrast pair remain manual work.
+- Desktop 1440×1000 and mobile 390×844 had no page-wide horizontal overflow (1425/375 CSS content widths excluding scrollbars). Core fields had native labels or accessible names. Mobile goal/task/proposal controls were inspected. After its entry animation, the mobile editor occupied x=16–374.4 and y=42.2–801.8 in a 390×844 viewport, with internal scrolling and no content-width overflow. Reduced motion support exists in CSS; OS screen-reader compatibility and every contrast pair remain manual work.
 - Final fresh-build browser error query returned no entries. Local ignored screenshots are `artifacts/engineering-desktop.png` and `artifacts/engineering-mobile.png`; no personal plan content was captured.
 
 ## External and human verification still required

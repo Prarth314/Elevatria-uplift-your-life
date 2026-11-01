@@ -218,7 +218,7 @@ The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies st
 - [x] **Local scheduling:** dependency-aware proposals, scenarios, acceptance, history and file portability.
 - [x] **Security remediation:** bounded inputs, account isolation safeguards, SQL concurrency/rate limits and CI protections.
 - [ ] **Live account validation:** configure a free development project and verify real OAuth, two-user isolation and hosted behavior.
-- [ ] **Further planning intelligence:** optional free/local AI experiments with a reliable template fallback, session locks and repair strategies.
+- [ ] **Planning validation:** peer usability study, browser performance profiles, and ordering/repair experiments driven by reproducible unmet planning needs.
 - [ ] **Calendar integration:** user-reviewed remote synchronization with durable idempotency and partial-failure recovery.
 
 ## Project notes

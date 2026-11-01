@@ -18,4 +18,16 @@ An initial working-tree run on Windows x64, Node 24.15.0, Ryzen 7 8840HS (16 log
 
 The per-run cache is bounded to one creation clock and a private snapshot of goals/settings, and is released after the repair. It does not introduce a global cross-account cache. Complexity remains heuristic: eligible-task sorting/scanning is repeated, free intervals are scanned, and recovery can test up to 200 whole-task candidates. Larger/dense graphs or slower devices can hit the five-second browser worker limit; that failure terminates the worker and preserves accepted work.
 
-Final reproducible measurements and source commit are recorded in the checked-in report added with the final evidence update. Browser paint/long-task profiling, low-end-device benchmarks, large embedded-image boards and hosted service latency remain unmeasured. The built-browser journey verifies behavior and responsiveness qualitatively, not a numeric frame-rate/INP claim.
+Final reproducible measurements and source commit are recorded below. Browser paint/long-task profiling, low-end-device benchmarks, large embedded-image boards and hosted service latency remain unmeasured. The built-browser journey verifies behavior and responsiveness qualitatively, not a numeric frame-rate/INP claim.
+
+## Final recorded run
+
+Measured clean commit `f200a16f91221d13281d1585284ae1e2ae063ab0` (`dirty: false`), source SHA-256 `ed724b333582fd4921511798583a966ccc0710d449cfe3f3d08909a217472f4c`. Full samples/distributions, dataset shape and environment metadata are in [the machine-readable report](benchmarks/2026-11-01-node24.json). Source code is identical in the following documentation-only update.
+
+| Tasks / goals | Schedule median / observed p95 | Recovery median / observed p95 | Cold Node-worker round trip median | Warm Node-worker round trip median |
+| --- | --- | --- | --- | --- |
+| 100 / 2 | 2.36 / 2.58 ms | 17.06 / 19.85 ms | 60.25 ms | 3.58 ms |
+| 300 / 3 | 10.42 / 11.86 ms | 144.66 / 158.31 ms | 65.48 ms | 12.11 ms |
+| 1000 / 5 | 30.13 / 32.4 ms | 508.65 / 521.12 ms | 90.95 ms | 33.39 ms |
+
+For the 1,000-task fixture, validated JSON import median was 2.11 ms, synthetic memory-port save/load 4.08 ms, and ICS serialization 15.24 ms. These measurements exclude browser rendering, native localStorage/Web Lock I/O, and calendar-client import. The final large recovery median was 508.65 ms; differences from exploratory runs also reflect machine load and subsequent code/check changes. Use the final report for reproducibility, not a claimed percentage improvement.
