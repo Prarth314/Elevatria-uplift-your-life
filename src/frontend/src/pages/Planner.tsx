@@ -31,7 +31,8 @@ import { localDate, newId, progress, validWorkspace } from "../planner/model";
 import type { Goal, Task, Workspace, VisionItem } from "../planner/model";
 import {
 	loadWorkspace,
-	saveLocalWorkspace,
+	guardedStorage,
+	saveCoordinatedLocalWorkspace,
 	WORKSPACE_KEY,
 } from "../planner/persistence";
 import { capacity, generatePlan, weeklyFocus } from "../planner/planning";
@@ -59,11 +60,11 @@ const formatDate = (date: string) =>
 	});
 const hours = (minutes: number) => `${Math.round((minutes / 60) * 10) / 10}h`;
 // Defer accessing the browser's storage getter until the persistence try/catch.
-const browserStorage = {
+const browserStorage = guardedStorage({
 	getItem: (key: string) => window.localStorage.getItem(key),
 	setItem: (key: string, value: string) =>
 		window.localStorage.setItem(key, value),
-};
+});
 export default function Planner() {
 	const [initial] = useState(() => {
 		try {
@@ -85,8 +86,44 @@ export default function Planner() {
 	const [cloudOwner, setCloudOwner] = useState<string | null>(null);
 	const ownerRef = useRef(cloudOwner);
 	ownerRef.current = cloudOwner;
-	const saveLocal = (next: Workspace) =>
-		saveLocalWorkspace(browserStorage, next, ownerRef.current);
+	const writeTicket = useRef(0);
+	const [saving, setSaving] = useState(false);
+	function queueLocalSave(
+		next: Workspace,
+		message = "Changes saved on this device.",
+		replace = false,
+	) {
+		const ticket = ++writeTicket.current;
+		setSaving(true);
+		let lock: typeof navigator.locks | undefined;
+		try {
+			lock = navigator.locks;
+		} catch {
+			/* Missing coordination keeps work in memory. */
+		}
+		void saveCoordinatedLocalWorkspace(
+			browserStorage,
+			next,
+			ownerRef.current,
+			lock,
+			() => ticket === writeTicket.current && ownerRef.current === null,
+			replace,
+		).then((error) => {
+			if (
+				ticket !== writeTicket.current ||
+				ownerRef.current !== null ||
+				error === undefined
+			)
+				return;
+			setSaving(false);
+			setSaveError(error ?? "");
+			setNotice(
+				error
+					? "Changes are in memory only. Export your board to preserve them."
+					: message,
+			);
+		});
+	}
 	const [editing, setEditing] = useState<Editing>(null);
 	const [saveError, setSaveError] = useState(
 		initial.status === "error" ? initial.message : "",
@@ -118,9 +155,7 @@ export default function Planner() {
 			setNotice("Changes are in memory only. Export your board to keep them.");
 			return true;
 		}
-		const error = saveLocal(next);
-		setSaveError(error ?? "");
-		setNotice(error ? "Changes are in memory only." : message);
+		queueLocalSave(next, message);
 		return true;
 	}
 	useEffect(() => {
@@ -133,7 +168,7 @@ export default function Planner() {
 		} catch {
 			/* Storage status is shown separately. */
 		}
-		if (initial.status === "empty") setSaveError(saveLocal(workspace) ?? "");
+		if (initial.status === "empty") queueLocalSave(workspace);
 		function externalChange(event: StorageEvent) {
 			if (
 				!ownerRef.current &&
@@ -256,6 +291,8 @@ export default function Planner() {
 		else run();
 	}
 	function restoreDemo() {
+		writeTicket.current++;
+		setSaving(false);
 		clearImageCache();
 		const result = loadWorkspace(browserStorage);
 		const next =
@@ -268,6 +305,8 @@ export default function Planner() {
 		setSaveError(result.status === "error" ? result.message : "");
 	}
 	function openCloud(next: Workspace, owner: string) {
+		writeTicket.current++;
+		setSaving(false);
 		setCloudOwner(owner);
 		setWorkspace(next);
 		setSelectedId(next.goals[0]?.id ?? "");
@@ -294,11 +333,7 @@ export default function Planner() {
 					);
 					return;
 				}
-				const error = saveLocal(next);
-				setSaveError(error ?? "");
-				setNotice(
-					error ? "Board is in memory only." : "Board saved on this device.",
-				);
+				queueLocalSave(next, "Board saved on this device.", true);
 			},
 		);
 	}
@@ -450,11 +485,13 @@ export default function Planner() {
 						<span
 							className={saveError || blocked ? "status-warn" : "status-dot"}
 						/>
-						{saveError || blocked
-							? "Saved changes need attention"
-							: cloudOwner
-								? "Account board · Save explicitly"
-								: "Saved on this device"}
+						{saving
+							? "Saving on this device…"
+							: saveError || blocked
+								? "Saved changes need attention"
+								: cloudOwner
+									? "Account board · Save explicitly"
+									: "Saved on this device"}
 					</span>
 				</header>
 				<main>
@@ -465,8 +502,7 @@ export default function Planner() {
 								{!blocked && !cloudOwner && (
 									<button
 										onClick={() => {
-											const error = saveLocal(workspace);
-											setSaveError(error ?? "");
+											queueLocalSave(workspace);
 										}}
 									>
 										Retry saving
@@ -852,6 +888,10 @@ export default function Planner() {
 							</section>
 							<aside className="goal-summary">
 								<section id="progress" className="progress-panel">
+									<p className="field-help">
+										Progress weights tasks by estimated effort. It is not
+										measured productivity or a probability of success.
+									</p>
 									<div className="eyebrow">LOOK HOW FAR YOU’VE COME</div>
 									<div className="progress-display">
 										<span>
@@ -903,7 +943,7 @@ export default function Planner() {
 										>
 											{estimate.over
 												? "Your remaining estimate exceeds the time available before your target. Reduce scope, add time, or move the target date."
-												: `${estimate.weeks} ${estimate.weeks === 1 ? "week" : "weeks"} of focused effort at your current pace.`}
+												: `${estimate.weeks} ${estimate.weeks === 1 ? "week" : "weeks"} of focused effort at your weekly budget (a rough capacity estimate).`}
 											<small>
 												Rough capacity estimate. Review actual availability and
 												dependencies in Schedule & replan.
@@ -958,7 +998,11 @@ export default function Planner() {
 						onLoad={openCloud}
 						onLeave={restoreDemo}
 					/>
-					<BackupTools key={`backup:${cloudOwner ?? "demo"}`} save={persist} />
+					<BackupTools
+						workspace={workspace}
+						key={`backup:${cloudOwner ?? "demo"}`}
+						save={persist}
+					/>
 					<div className="mobile-board-actions">
 						<span>
 							{cloudOwner

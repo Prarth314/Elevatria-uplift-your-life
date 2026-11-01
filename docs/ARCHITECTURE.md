@@ -42,3 +42,9 @@ For a Vercel-compatible portfolio application, the recommended next step is a co
 - Replanning creates a proposed diff and preserves completed work. User approval is required before changing the accepted schedule.
 - Calendar export uses stable identity scoped to user, plan, task, and occurrence; reconcile with the remote event before retrying. Persist operations and remote IDs so an insert-success/persistence-failure cannot create duplicates on retry.
 - Test duration/window bounds, deadline/cycle handling, ownership isolation, duplicate/concurrent export attempts, and partial failure recovery before enabling integrations.
+
+## Planning reliability update — November 1, 2026
+
+The active scheduler now exposes allocation facts and distinguishes direct deadline/no-window contradictions from heuristic unplaced results. Recovery supports earlier/later deadlines and explicit retained/changed/new/removed allocation summaries. Independent checks include minimum-fragment semantics. Immutable availability is cached only inside a repair validator closure; candidate checks remain independent of the generator.
+
+Browser demo writes use the same origin-scoped Web Lock plus observed-value comparison, with request tickets preventing obsolete writes/status responses after newer edits or account transitions. Unsupported coordination keeps changes in memory with a safe export warning. This is cooperative current-app coordination, not a guarantee against outside code or hardware failure. Worker transport cleanup is injectable/tested; every reply is revision- and invariant-checked. See [the complete planning contract](PLANNING_MODEL.md) and [current evidence](ENGINEERING_EVIDENCE.md). Google and GitHub identity support exists; hosted auth is still unverified.

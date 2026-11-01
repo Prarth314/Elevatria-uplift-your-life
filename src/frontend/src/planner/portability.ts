@@ -1,6 +1,29 @@
 import { validWorkspace } from "./model.ts";
 import type { Workspace } from "./model.ts";
 import type { Schedule } from "./schedule-types.ts";
+import { inputRevision, scheduleViolations } from "./scheduler.ts";
+/** Export exactly the accepted snapshot, never a proposal or a stale allocation. */
+export function acceptedCalendarFile(
+	workspace: Workspace,
+	now = new Date().toISOString(),
+): string {
+	const planning = workspace.planning;
+	if (
+		!planning?.accepted ||
+		planning.accepted.inputRevision !==
+			inputRevision(workspace, planning.settings)
+	)
+		throw Error(
+			"Review and accept a schedule for the current plan before exporting.",
+		);
+	const errors = scheduleViolations(
+		workspace,
+		planning.settings,
+		planning.accepted,
+	);
+	if (errors.length) throw Error(errors.join(" "));
+	return calendarFile(planning.accepted, now);
+}
 export function parseBackup(raw: string): Workspace {
 	if (new TextEncoder().encode(raw).length > 8_000_000)
 		throw Error("Backup exceeds the 8 MB import limit.");

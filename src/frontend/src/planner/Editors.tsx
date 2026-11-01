@@ -125,7 +125,7 @@ export function GoalEditor({
 							required
 							min={goal ? undefined : localDate()}
 							value={draft.targetDate}
-							onChange={(e) => set("targetDate", e.target.value)}
+							onInput={(e) => set("targetDate", e.currentTarget.value)}
 						/>
 					</label>
 					<label>
@@ -143,12 +143,12 @@ export function GoalEditor({
 					</label>
 				</div>
 				<label>
-					Constraints & boundaries
+					Constraints & boundaries (notes only)
 					<textarea
 						maxLength={2000}
 						value={draft.constraints}
 						onChange={(e) => set("constraints", e.target.value)}
-						placeholder="Classes, budget, energy, resources, or anything to keep in mind."
+						placeholder="Notes for you; these are not parsed or enforced by scheduling."
 					/>
 				</label>
 				<label>
@@ -391,7 +391,7 @@ export function TaskEditor({
 					/>
 				</label>
 				<label>
-					Estimated minutes
+					Estimated total minutes
 					<input
 						type="number"
 						required
@@ -406,6 +406,11 @@ export function TaskEditor({
 				</label>
 				<fieldset className="dependency-editor">
 					<legend>Finish these tasks first (optional)</legend>
+					<p className="field-help">
+						An unfinished task schedules its full estimate; partial time logging
+						is not supported. Reopening restores the full estimate. Completion
+						records your assertion independently of prerequisite status.
+					</p>
 					<p>
 						Dependencies can cross goals. Cycles are rejected when saving.
 						Remove dependencies before deleting a prerequisite.

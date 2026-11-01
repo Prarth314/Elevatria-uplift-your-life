@@ -1,3 +1,9 @@
+import {
+	allocationSummary,
+	placementFacts,
+	unplacedExplanation,
+} from "./explanations";
+import { proposalErrors } from "./proposals";
 import { RecoveryPanel } from "./RecoveryPanel";
 import { computeSchedule } from "./worker-client";
 import { useEffect, useState, useRef, useMemo } from "react";
@@ -13,7 +19,7 @@ import {
 import { settingsErrors } from "./schedule-validation.ts";
 import { validTimezone } from "./time.ts";
 import { addDays } from "./time.ts";
-import { calendarFile, downloadFile } from "./portability.ts";
+import { acceptedCalendarFile, downloadFile } from "./portability.ts";
 const weekdays = [
 	"Sunday",
 	"Monday",
@@ -23,12 +29,6 @@ const weekdays = [
 	"Friday",
 	"Saturday",
 ];
-const reasons = {
-	DEPENDENCY_BLOCKED: "A prerequisite could not be fully scheduled.",
-	INSUFFICIENT_CAPACITY:
-		"Could not fit within availability, weekly goal budgets, session sizes, and deadlines in this horizon.",
-	DEADLINE_PASSED: "The target date has already passed.",
-};
 export function SchedulePanel({
 	workspace,
 	save,
@@ -51,6 +51,7 @@ export function SchedulePanel({
 	const [error, setError] = useState("");
 	const [message, setMessage] = useState("");
 	const [computing, setComputing] = useState(false);
+	const [recovering, setRecovering] = useState(false);
 	const computation = useRef<AbortController | null>(null);
 	useEffect(() => () => computation.current?.abort(), []);
 	useEffect(() => {
@@ -59,6 +60,12 @@ export function SchedulePanel({
 		setRecoveryDraft(null);
 		setScenario(null);
 	}, [workspace.planning?.settings]);
+	useEffect(() => {
+		computation.current?.abort();
+		setProposal(null);
+		setRecoveryDraft(null);
+		setScenario(null);
+	}, [workspace, settings]);
 	const accepted = workspace.planning?.accepted;
 	const revision = useMemo(
 		() => inputRevision(workspace, settings),
@@ -69,6 +76,7 @@ export function SchedulePanel({
 		JSON.stringify(settings) !==
 		JSON.stringify(workspace.planning?.settings ?? defaultSettings());
 	const changes = proposal ? scheduleDiff(accepted, proposal) : [];
+	const summary = proposal ? allocationSummary(accepted, proposal) : null;
 	function update(next: ScheduleSettings) {
 		setSettings(next);
 		setScenario(null);
@@ -108,12 +116,20 @@ export function SchedulePanel({
 		try {
 			if (dirty) throw Error("Save availability before generating a proposal.");
 			setRecoveryDraft(null);
-			setProposal(
-				await computeSchedule(workspace, settings, controller.signal),
+			const result = await computeSchedule(
+				workspace,
+				settings,
+				controller.signal,
 			);
+			if (controller.signal.aborted) return;
+			setProposal(result);
 			setError("");
 			setMessage("Proposal generated. Your accepted schedule has not changed.");
 		} catch (e) {
+			if (e instanceof DOMException && e.name === "AbortError") {
+				setMessage("Computation cancelled. Accepted schedule unchanged.");
+				return;
+			}
 			setError(
 				e instanceof Error ? e.message : "Scheduling failed. Try again.",
 			);
@@ -137,11 +153,7 @@ export function SchedulePanel({
 				throw Error(
 					"This proposal is stale. Generate again using the latest goals and availability.",
 				);
-			if (proposal.sessions.some((s) => Date.parse(s.start) < Date.now()))
-				throw Error(
-					"A proposed session is already in the past. Generate a fresh proposal.",
-				);
-			const errors = scheduleViolations(target, settings, proposal);
+			const errors = proposalErrors(target, settings, proposal);
 			if (errors.length) throw Error(errors.join(" "));
 			const next: Workspace = {
 				...target,
@@ -170,6 +182,10 @@ export function SchedulePanel({
 				"Schedule accepted. Check the workspace save status to confirm persistence.",
 			);
 		} catch (e) {
+			if (e instanceof DOMException && e.name === "AbortError") {
+				setMessage("Computation cancelled. Accepted schedule unchanged.");
+				return;
+			}
 			setError(e instanceof Error ? e.message : "Could not accept schedule.");
 		}
 	}
@@ -188,12 +204,22 @@ export function SchedulePanel({
 						: { ...g, targetDate: addDays(g.targetDate, 7) },
 				),
 			};
-			setScenario(await computeSchedule(variant, settings, controller.signal));
+			const result = await computeSchedule(
+				variant,
+				settings,
+				controller.signal,
+			);
+			if (controller.signal.aborted) return;
+			setScenario(result);
 			setError("");
 			setMessage(
 				"Scenario only. Goals, dates, and accepted sessions remain unchanged.",
 			);
 		} catch (e) {
+			if (e instanceof DOMException && e.name === "AbortError") {
+				setMessage("Computation cancelled. Accepted schedule unchanged.");
+				return;
+			}
 			setError(
 				e instanceof Error ? e.message : "Scenario could not be computed.",
 			);
@@ -211,7 +237,7 @@ export function SchedulePanel({
 			const errors = scheduleViolations(workspace, settings, accepted);
 			if (errors.length) throw Error(errors.join(" "));
 			downloadFile(
-				calendarFile(accepted),
+				acceptedCalendarFile(workspace),
 				`elevatria-${localDate()}.ics`,
 				"text/calendar;charset=utf-8",
 			);
@@ -220,10 +246,14 @@ export function SchedulePanel({
 				"Calendar downloaded. Import behavior, including updates, depends on your calendar application.",
 			);
 		} catch (e) {
+			if (e instanceof DOMException && e.name === "AbortError") {
+				setMessage("Computation cancelled. Accepted schedule unchanged.");
+				return;
+			}
 			setError(e instanceof Error ? e.message : "Calendar export failed.");
 		}
 	}
-	function renderSchedule(schedule: Schedule) {
+	function renderSchedule(schedule: Schedule, source = workspace) {
 		const format = new Intl.DateTimeFormat(undefined, {
 			timeZone: validTimezone(settings.timezone) ? settings.timezone : "UTC",
 			weekday: "short",
@@ -240,8 +270,9 @@ export function SchedulePanel({
 			<div className="schedule-result">
 				<p className="schedule-stats">
 					{schedule.sessions.length} sessions · {Math.round(duration / 6) / 10}{" "}
-					hours placed · {schedule.unscheduled.length} tasks with unscheduled
-					work
+					hours placed ·{" "}
+					{schedule.unscheduled.reduce((n, t) => n + t.remainingMinutes, 0)}{" "}
+					minutes unplaced across {schedule.unscheduled.length} tasks
 				</p>
 				{schedule.warnings.map((w) => (
 					<p className="schedule-warning" key={w}>
@@ -268,7 +299,28 @@ export function SchedulePanel({
 									}).format(new Date(s.end))}
 								</small>
 							</span>
-							<strong>{s.title}</strong>
+							<div>
+								<strong>{s.title}</strong>
+								<details className="placement-facts">
+									<summary>Placement details</summary>
+									{schedule.inputRevision ===
+									inputRevision(source, settings) ? (
+										<ul>
+											{placementFacts(source, settings, schedule, s).map(
+												(fact) => (
+													<li key={fact}>{fact}</li>
+												),
+											)}
+										</ul>
+									) : (
+										<p>
+											Historical or changed inputs. Allocation times are
+											preserved, but current constraints cannot explain this
+											snapshot. Review a fresh proposal.
+										</p>
+									)}
+								</details>
+							</div>
 							<span>
 								{Math.round((Date.parse(s.end) - Date.parse(s.start)) / 60000)}m
 							</span>
@@ -289,7 +341,27 @@ export function SchedulePanel({
 								<li key={t.taskId}>
 									<strong>{t.title}</strong>
 									<span>
-										{t.remainingMinutes} minutes remaining · {reasons[t.reason]}
+										{t.remainingMinutes} minutes unplaced ·{" "}
+										{schedule.inputRevision ===
+										inputRevision(recoveryDraft ?? workspace, settings)
+											? (() => {
+													const explanation = unplacedExplanation(
+														recoveryDraft ?? workspace,
+														settings,
+														schedule,
+														t,
+													);
+													return (
+														<>
+															{explanation.kind === "proven"
+																? "No placement under this constraint: "
+																: "Heuristic result: "}
+															{explanation.reason} <strong>Try:</strong>{" "}
+															{explanation.adjustment}
+														</>
+													);
+												})()
+											: "Historical result; review a new proposal against current inputs."}
 									</span>
 								</li>
 							))}
@@ -628,10 +700,15 @@ export function SchedulePanel({
 					</button>
 				</p>
 			)}
+			<p className="field-help">
+				The scheduler chooses eligible tasks by earliest goal deadline, higher
+				priority, then board order. It uses chronological free slots; recovery
+				can reserve prior allocations. It does not search every ordering.
+			</p>
 			<div className="schedule-actions">
 				<button
 					className="primary-button"
-					disabled={computing}
+					disabled={computing || recovering}
 					onClick={generate}
 				>
 					{accepted ? "Propose replan from now" : "Generate schedule proposal"}
@@ -645,6 +722,8 @@ export function SchedulePanel({
 				</button>
 			</div>
 			<RecoveryPanel
+				disabled={computing}
+				onBusyChange={setRecovering}
 				onInvalidate={() => {
 					setProposal(null);
 					setRecoveryDraft(null);
@@ -697,7 +776,11 @@ export function SchedulePanel({
 				<section className="proposal-review" aria-label="Schedule proposal">
 					<h3>Review before committing</h3>
 					<p>
-						{changes.length} tasks have a different allocation.{" "}
+						{summary?.retained} allocations retained · {summary?.changedTasks}{" "}
+						tasks with moved or resized allocations · {summary?.removed}{" "}
+						allocations removed · {summary?.added} new allocations. Unplaced
+						effort: {summary?.beforeUnplaced} → {summary?.afterUnplaced}{" "}
+						minutes.{" "}
 						{recoveryDraft
 							? "Protected work stays fixed. Other sessions are retained where feasible. Review every change before accepting."
 							: "This creates a fresh allocation from now. Use My week changed to preserve commitments."}{" "}
@@ -749,7 +832,7 @@ export function SchedulePanel({
 							alternative is impossible.
 						</p>
 					)}
-					{renderSchedule(proposal)}
+					{renderSchedule(proposal, recoveryDraft ?? workspace)}
 					<details>
 						<summary>Compare with accepted version</summary>
 						<ul className="change-list">
@@ -803,6 +886,7 @@ export function SchedulePanel({
 					<select
 						value={scenarioKind}
 						onChange={(e) => {
+							computation.current?.abort();
 							setScenarioKind(e.target.value);
 							setScenario(null);
 						}}
@@ -815,7 +899,11 @@ export function SchedulePanel({
 						</option>
 					</select>
 				</label>
-				<button className="quiet-button" disabled={computing} onClick={compare}>
+				<button
+					className="quiet-button"
+					disabled={computing || recovering}
+					onClick={compare}
+				>
 					Compare scenario
 				</button>
 				{scenario && (

@@ -151,7 +151,7 @@ The API binds to 127.0.0.1:5176; Vite proxies /api to it. Restart both processes
 | Design | Tailwind CSS, scoped planner CSS, Radix dialogs, Lucide icons, self-hosted Inter/Playfair fonts |
 | Domain | Pure template generation, schema validation, weighted progress and dependency graph checks |
 | Scheduling | Deterministic earliest-deadline heuristic, global availability, timezone/DST handling, bounded Web Worker and independent invariant validator |
-| Local persistence | Versioned localStorage adapter with visible failures and cross-tab overwrite protection |
+| Local persistence | Versioned localStorage adapter, coordinated Web Lock writes, stale-tab rejection and visible recovery/export paths |
 | Optional cloud | Same-origin Node/Vercel API, verified Supabase Google/GitHub identity, server-only PostgreSQL RPCs, optimistic revisions and shared account limits |
 | Verification | Node test runner, PGlite PostgreSQL, TypeScript, package/source audits, immutable CI action pins |
 | Retained experiment | Inactive Motoko / Internet Computer source and generated bindings |
@@ -178,7 +178,9 @@ docs/                              Setup, decisions, audit and verification
 
 The scheduler checks durations, shared windows, fixed commitments, deadlines, weekly goal budgets, breaks and prerequisite completion. It splits long tasks across sessions and explains remaining work. Nonexistent DST wall times are skipped with a warning; repeated times choose the earlier occurrence. The heuristic **does not prove optimality or infeasibility of every alternative arrangement**.
 
-Replanning recomputes unfinished work from now and requires review before replacement. The **My week changed** workflow supports reduced hours, changed availability, revised estimates and later deadlines. It protects selected tasks’ existing sessions for that repair and greedily retains other feasible whole-task allocations. Acceptance is explicit; undo restores the previous board during the same session unless newer edits exist. It does not prove a globally minimal repair, infer completion, interpret free-text constraints or persist individual session locks. Accepted history is bounded. Weekly focus remains a simpler ordered budget view; it is distinct from the scheduler.
+Placement details show constraint facts; unplaced work distinguishes direct no-window/deadline contradictions from heuristic results. Recovery reviews retained/changed/new/removed allocations and unplaced minutes.
+
+Replanning recomputes unfinished work from now and requires review before replacement. The **My week changed** workflow supports reduced hours, changed availability, revised estimates and earlier/later deadlines. It protects selected tasks’ existing sessions for that repair and greedily retains other feasible whole-task allocations. Acceptance is explicit; undo restores the previous board during the same session unless newer edits exist. It does not prove a globally minimal repair, infer completion, interpret free-text constraints or persist individual session locks. Accepted history is bounded. Weekly focus remains a simpler ordered budget view; it is distinct from the scheduler.
 
 The original Motoko backend has no goal/task API and depends on separate platform tooling. Keeping it inactive lets the web application remain Vercel-compatible while the conventional API provides testable ownership and concurrency boundaries. Legacy shell deployment entry points stop immediately; no canister is provisioned. See [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -194,9 +196,15 @@ The original Motoko backend has no goal/task API and depends on separate platfor
 
 The local demo is **one unencrypted board per browser origin**, not an authorized account store. Clearing browser data removes it. Account sessions use tab-scoped sessionStorage; account documents are kept out of the demo store. Export files contain your board. Retired prototype auth/provider-key entries are removed on startup without reading their contents; unrelated legacy board/chat data is preserved.
 
+## Engineering evidence
+
+[Domain semantics](docs/PLANNING_MODEL.md) · [Capability/evidence matrix](docs/ENGINEERING_EVIDENCE.md) · [Measured benchmarks](docs/BENCHMARKS.md) · [Synthetic demo](docs/DEMO.md) · [Usability study kit](docs/USABILITY_STUDY.md)
+
+The deterministic heuristic has an independently enumerated counterexample: a different task ordering can place work that this ordering leaves unplaced. This is documented and tested rather than presented as global infeasibility. Browser saves combine a shared Web Lock with revision comparison; unsupported coordination leaves work in memory with an export warning.
+
 ## Verification and security
 
-The current suite has **46 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
+The current suite has **61 passing tests** covering schedule constraints/randomized graphs, DST, validation, weighted progress, backups, Calendar escaping/identity, storage failures, account ownership, PostgreSQL permissions/rate limits/revision reuse, input bounds and configuration safeguards. Frozen installation, frontend/server type checking, production build, source/history/output scan and package audit pass locally.
 
 Browser checks cover desktop/mobile layouts, goal/task editing, keyboard completion, focus recovery, cyclic-edit rejection, safe text rendering, processed images, schedule review/acceptance and file operations. [VERIFICATION.md](docs/VERIFICATION.md) records evidence and limits. [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) lists findings, remediations and the remaining operational plan; [SECURITY.md](SECURITY.md) explains private reporting.
 
@@ -221,6 +229,8 @@ The frontend builds to src/frontend/dist. [vercel.json](vercel.json) supplies st
 - [Cloud setup](docs/CLOUD_SETUP.md) — optional, free-service development steps.
 - [Security audit](docs/SECURITY_AUDIT.md) — findings and remaining verification.
 - [Verification](docs/VERIFICATION.md) — checks actually performed.
+
+The frontend originated as a Caffeine-assisted learning export. The repository retains its history and applicable licenses; subsequent planning, scheduling, recovery and verification work is documented in the commits and engineering guides. This provenance is distinct from the new engineering contributions.
 
 Developed by **[Prarth Gupta](https://github.com/Prarth314)**. Existing source licenses and attribution are preserved. Required botanical artwork remains; unused prototype screenshots were removed. The board landscape is CSS, interface icons are Lucide, and the README banner is repository-native SVG. Font licenses ship in src/frontend/public/licenses.
 

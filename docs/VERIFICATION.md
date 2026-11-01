@@ -79,3 +79,7 @@ Main-thread imports, schema validation, image preprocessing and synchronous loca
 - Credential patterns and metadata review do not establish absence of every secret, PII format or image content issue. Intentional public author attribution remains.
 
 See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the complete finding/remediation list and prioritized operational plan.
+
+## Current engineering milestone — November 1, 2026
+
+The current local milestone has **61 passing tests**, including Web Lock coordination, worker lifecycle/entry integration, full-scheduler DST checks, independent ICS parsing and an exhaustive heuristic counterexample. Frontend/server type checks, production build, credential scan and dependency audit pass locally. See [ENGINEERING_EVIDENCE.md](ENGINEERING_EVIDENCE.md) for the capability/evidence matrix, current browser/artifact results and remaining external/human checks, [PLANNING_MODEL.md](PLANNING_MODEL.md) for exact semantics, and [BENCHMARKS.md](BENCHMARKS.md) for measurement boundaries. Older counts and public-verification limitations below are historical; their chronology is preserved rather than relabeled as current evidence.

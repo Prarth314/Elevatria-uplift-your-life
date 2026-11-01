@@ -5,6 +5,7 @@ import {
 	scheduleViolations,
 	inputRevision,
 	scheduleDiff,
+	scheduleValidator,
 } from "../src/frontend/src/planner/scheduler.ts";
 import { wallInstant } from "../src/frontend/src/planner/time.ts";
 import { validWorkspace } from "../src/frontend/src/planner/model.ts";
@@ -13,13 +14,14 @@ import type { Workspace } from "../src/frontend/src/planner/model.ts";
 import type { ScheduleSettings } from "../src/frontend/src/planner/schedule-types.ts";
 const now = "2026-10-26T08:00:00.000Z";
 
-test('accepted schedules and history persist through validated backup restoration',()=>{
-  const {workspace,settings}=fixture();const accepted=generateSchedule(workspace,settings,now);
-  workspace.planning={settings,accepted,history:[accepted]};
-  assert.equal(validWorkspace(workspace),true);
-  assert.deepEqual(parseBackup(JSON.stringify(workspace)),workspace);
-  (workspace.planning.accepted.sessions[0] as any).start='not-a-date';
-  assert.equal(validWorkspace(workspace),false);
+test("accepted schedules and history persist through validated backup restoration", () => {
+	const { workspace, settings } = fixture();
+	const accepted = generateSchedule(workspace, settings, now);
+	workspace.planning = { settings, accepted, history: [accepted] };
+	assert.equal(validWorkspace(workspace), true);
+	assert.deepEqual(parseBackup(JSON.stringify(workspace)), workspace);
+	(workspace.planning.accepted.sessions[0] as any).start = "not-a-date";
+	assert.equal(validWorkspace(workspace), false);
 });
 function fixture(): { workspace: Workspace; settings: ScheduleSettings } {
 	return {
@@ -134,6 +136,26 @@ test("weekly goal budget remains a cap even when more availability exists", () =
 	assert.equal(result.unscheduled[0].taskId, "b");
 	assert.equal(result.unscheduled[0].remainingMinutes, 90);
 });
+
+test("validator rejects undersized early fragments but permits a short final remainder", () => {
+	const { workspace, settings } = fixture();
+	settings.breakMinutes = 0;
+	const result = generateSchedule(workspace, settings, now);
+	const first = result.sessions[0];
+	result.sessions.splice(
+		0,
+		1,
+		{ ...first, id: "early", end: "2026-10-26T09:10:00.000Z" },
+		{ ...first, id: "rest", start: "2026-10-26T09:10:00.000Z" },
+	);
+	assert.match(
+		scheduleViolations(workspace, settings, result).join(" "),
+		/minimum usable/,
+	);
+	result.sessions[0].end = "2026-10-26T09:50:00.000Z";
+	result.sessions[1].start = "2026-10-26T09:50:00.000Z";
+	assert.deepEqual(scheduleViolations(workspace, settings, result), []);
+});
 test("cycles, dangling dependencies, overlapping windows, and invalid timezones fail before scheduling", () => {
 	const { workspace, settings } = fixture();
 	workspace.goals[0].milestones[0].tasks[0].dependsOn = ["b"];
@@ -180,6 +202,55 @@ test("DST gaps are rejected and repeated wall times choose the earlier instant",
 		"2026-10-26T13:30:00.000Z",
 	);
 });
+
+test("full schedules warn on spring gaps and respect commitments through a fall fold", () => {
+	const { workspace, settings } = fixture();
+	workspace.goals[0].targetDate = "2026-12-01";
+	settings.timezone = "America/Chicago";
+	settings.horizonDays = 1;
+	settings.windows = [{ id: "w", weekday: 0, start: "02:30", end: "04:00" }];
+	const gap = generateSchedule(workspace, settings, "2026-03-08T06:00:00.000Z");
+	assert.equal(gap.sessions.length, 0);
+	assert.match(gap.warnings[0], /clock changes/);
+	settings.windows = [{ id: "w", weekday: 0, start: "01:00", end: "04:00" }];
+	settings.commitments = [
+		{
+			id: "c",
+			title: "Class",
+			date: "2026-11-01",
+			start: "01:30",
+			end: "02:30",
+		},
+	];
+	const fold = generateSchedule(
+		workspace,
+		settings,
+		"2026-11-01T05:00:00.000Z",
+	);
+	assert.deepEqual(scheduleViolations(workspace, settings, fold), []);
+	assert.ok(
+		fold.sessions.every(
+			(s) =>
+				s.end <= "2026-11-01T06:30:00.000Z" ||
+				s.start >= "2026-11-01T08:30:00.000Z",
+		),
+	);
+	settings.commitments = [
+		{
+			...settings.commitments[0],
+			date: "2026-03-08",
+			start: "02:15",
+			end: "03:15",
+		},
+	];
+	const blocked = generateSchedule(
+		workspace,
+		settings,
+		"2026-03-08T06:00:00.000Z",
+	);
+	assert.equal(blocked.sessions.length, 0);
+	assert.match(blocked.warnings.join(" "), /Blocked/);
+});
 test("independent validation rejects manipulated schedules and stale revisions differ", () => {
 	const { workspace, settings } = fixture();
 	const result = generateSchedule(workspace, settings, now);
@@ -190,6 +261,38 @@ test("independent validation rejects manipulated schedules and stale revisions d
 	assert.notEqual(result.inputRevision, inputRevision(workspace, settings));
 	assert.equal(scheduleDiff(result, result).length, 0);
 	assert.ok(scheduleDiff(undefined, result).length);
+});
+
+test("per-run validator caching preserves every invariant and snapshots inputs", () => {
+	const { workspace, settings } = fixture();
+	const result = generateSchedule(workspace, settings, now);
+	const validate = scheduleValidator(workspace, settings);
+	for (const mutate of [
+		(s: typeof result) => {
+			s.sessions[1].start = s.sessions[0].start;
+		},
+		(s: typeof result) => {
+			s.sessions[0].end = "2026-10-26T12:30:00.000Z";
+		},
+		(s: typeof result) => {
+			s.sessions.pop();
+		},
+		(s: typeof result) => {
+			s.createdAt = "2026-10-26T10:00:00.000Z";
+		},
+	]) {
+		const candidate = structuredClone(result);
+		mutate(candidate);
+		assert.deepEqual(
+			validate(candidate),
+			scheduleViolations(workspace, settings, candidate),
+		);
+		assert.ok(validate(candidate).length);
+	}
+	workspace.goals[0].weeklyHours = 0.5;
+	settings.windows = [];
+	assert.deepEqual(validate(result), []);
+	assert.ok(scheduleViolations(workspace, settings, result).length);
 });
 test("generated randomized DAG fixtures preserve invariants across competing goals", () => {
 	let seed = 314;

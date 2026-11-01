@@ -1,7 +1,7 @@
 import { plain, identifier } from "./structure.ts";
 import type { Workspace } from "./model.ts";
 import type { Schedule, ScheduleSettings, Session } from "./schedule-types.ts";
-import { generateSchedule, scheduleViolations } from "./scheduler.ts";
+import { generateSchedule, scheduleValidator } from "./scheduler.ts";
 import { validPlanning } from "./schedule-validation.ts";
 export interface RepairOptions {
 	previous: Schedule;
@@ -64,6 +64,7 @@ export function repairSchedule(
 	// Bounded greedy repair: retain whole task allocations only when the independent validator approves.
 	// This is a stability heuristic, not a proof of a globally minimal repair.
 	let checks = 0;
+	const validate = scheduleValidator(workspace, settings);
 	for (const [id, group] of groups) {
 		if (
 			options.protectedTaskIds.includes(id) ||
@@ -80,8 +81,7 @@ export function repairSchedule(
 				...group.map((s) => ({ ...s, title: task.title })),
 			].sort((a, b) => a.start.localeCompare(b.start)),
 		};
-		if (!scheduleViolations(workspace, settings, candidate).length)
-			result = candidate;
+		if (!validate(candidate).length) result = candidate;
 	}
 	return result;
 }

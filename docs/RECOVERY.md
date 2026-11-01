@@ -28,3 +28,7 @@ Protection selections are scoped to a repair, not permanent database flags. No s
 The domain tests cover retention versus a fresh allocation, deterministic/no-mutation behavior, protected capacity, conflicting availability, dependency ordering, deadlines, missed work, completed/re-estimated tasks, smaller budgets and malformed options. Browser verification checks the full proposal/accept/undo flow and invalid protection without an external service. Live OAuth/cloud configuration remains separately pending.
 
 Browser checks on October 31, 2026: generated a protected recovery from a four-hour to one-hour weekly budget, accepted it, and undid it to recover the original nine-session schedule and four-hour budget. A 30-minute budget rejected a protected 45-minute task. Changing inputs removed the previous preview; editing the board after generating recovery prevented stale acceptance. Desktop (1440×1000) and mobile (390×844) views had no horizontal overflow, and the browser error query returned no entries. Tests and build run without cloud credentials.
+
+## Earlier deadlines and verification update
+
+Recovery deadline shifts can now be -365 through 365 whole days, excluding zero. A negative shift proposes an earlier deadline; constraints and unplaced work are reviewed before acceptance. Inputs, acceptance and worker responses are guarded against newer edits. See [current model](PLANNING_MODEL.md) and [engineering evidence](ENGINEERING_EVIDENCE.md) for the November 2026 verification and limitations.

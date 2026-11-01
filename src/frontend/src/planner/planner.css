@@ -29,6 +29,9 @@
 .planner-app button:focus-visible,
 .planner-app a:focus-visible,
 .planner-app input:focus-visible,
+.planner-app select:focus-visible,
+.planner-app textarea:focus-visible,
+.planner-app summary:focus-visible,
 .planner-dialog :focus-visible {
 	outline: 2px solid #527a44;
 	outline-offset: 4px;
@@ -1025,7 +1028,7 @@
 	max-width: 390px;
 	margin: 0 auto 22px;
 	font-size: 12px;
-	color: #75826b;
+	color: #56664e;
 }
 .weekly-focus {
 	padding: 12px 0 23px;
@@ -1035,7 +1038,7 @@
 }
 .weekly-focus > p {
 	font-size: 11px;
-	color: #77836d;
+	color: #56664e;
 	margin: 12px 0 18px;
 }
 .empty-focus {
@@ -1061,7 +1064,7 @@
 	letter-spacing: -.5px;
 }
 .planner-dialog > p {
-	color: #748168;
+	color: #56664e;
 	font-size: 12px;
 	line-height: 1.8;
 }
@@ -1646,7 +1649,7 @@ html {
 	max-height: 500px;
 	overflow: auto;
 }
-.session-list li {
+.session-list > li {
 	display: grid;
 	grid-template-columns: 180px 1fr 45px;
 	gap: 18px;
@@ -1662,7 +1665,7 @@ html {
 .session-list small {
 	display: block;
 	font-size: 11px;
-	color: #758469;
+	color: #56664e;
 }
 .unscheduled-details ul,
 .change-list {
@@ -1790,7 +1793,7 @@ html {
 		grid-template-columns: 1fr 45px;
 		gap: 8px;
 	}
-	.session-list li > span:first-child {
+	.session-list > li > span:first-child {
 		grid-column: 1 / -1;
 	}
 	.proposal-review {
@@ -1833,4 +1836,36 @@ html {
 	overflow-wrap: anywhere;
 }
 
-.scenario-panel input[type="number"] { width: 100%; max-width: 22rem; padding: .7rem; border: 1px solid #d9dfd2; border-radius: .5rem; background: transparent; color: inherit; font: inherit; }
+.scenario-panel input[type="number"] {
+	width: 100%;
+	max-width: 22rem;
+	padding: .7rem;
+	border: 1px solid #d9dfd2;
+	border-radius: .5rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+}
+
+.placement-facts {
+	margin-top: 8px;
+	color: #40563b;
+	line-height: 1.7;
+}
+.placement-facts summary {
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.placement-facts ul {
+	padding-left: 18px;
+	margin-top: 8px;
+}
+.placement-facts li {
+	padding: 3px 0;
+	overflow-wrap: anywhere;
+}
+.backup-tools label:focus-within {
+	outline: 3px solid #526b45;
+	outline-offset: 4px;
+}

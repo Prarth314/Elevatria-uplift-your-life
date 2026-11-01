@@ -8,11 +8,15 @@ export function RecoveryPanel({
 	settings,
 	onProposal,
 	onInvalidate,
+	disabled,
+	onBusyChange,
 }: {
 	workspace: Workspace;
 	settings: ScheduleSettings;
 	onProposal: (next: Workspace, schedule: Schedule) => void;
 	onInvalidate: () => void;
+	disabled: boolean;
+	onBusyChange: (busy: boolean) => void;
 }) {
 	const [reason, setReason] = useState("missed"),
 		[goalId, setGoalId] = useState(workspace.goals[0]?.id ?? ""),
@@ -28,6 +32,14 @@ export function RecoveryPanel({
 	useEffect(() => {
 		request.current?.abort();
 	}, [workspace, settings]);
+	useEffect(() => {
+		setProtected([]);
+		setGoalId((id) =>
+			workspace.goals.some((g) => g.id === id)
+				? id
+				: (workspace.goals[0]?.id ?? ""),
+		);
+	}, [workspace]);
 	const accepted = workspace.planning?.accepted;
 	const tasks = workspace.goals.flatMap((g) =>
 		g.milestones.flatMap((m) => m.tasks),
@@ -37,6 +49,7 @@ export function RecoveryPanel({
 		const controller = new AbortController();
 		request.current = controller;
 		setBusy(true);
+		onBusyChange(true);
 		setError("");
 		try {
 			if (!accepted) throw Error("Accept an initial schedule first.");
@@ -47,15 +60,23 @@ export function RecoveryPanel({
 				throw Error("Weekly hours must be between 0.5 and 80.");
 			if (
 				reason === "deadline" &&
-				(!Number.isInteger(amount) || amount < 1 || amount > 365)
+				(!Number.isInteger(amount) ||
+					amount === 0 ||
+					amount < -365 ||
+					amount > 365)
 			)
-				throw Error("Extend the deadline by 1–365 whole days.");
+				throw Error(
+					"Move the deadline by -365 to 365 whole days, excluding zero.",
+				);
 			if (
 				reason === "effort" &&
 				(!Number.isInteger(minutes) || minutes < 5 || minutes > 480)
 			)
 				throw Error("Task effort must be 5–480 whole minutes.");
-			if (!workspace.goals.some((g) => g.id === goalId))
+			if (
+				["hours", "deadline"].includes(reason) &&
+				!workspace.goals.some((g) => g.id === goalId)
+			)
 				throw Error("Choose a goal.");
 			if (
 				reason === "effort" &&
@@ -86,8 +107,12 @@ export function RecoveryPanel({
 				controller.signal,
 				{ previous: accepted, protectedTaskIds: protectedIds },
 			);
-			onProposal(next, schedule);
+			if (!controller.signal.aborted) onProposal(next, schedule);
 		} catch (e) {
+			if (e instanceof DOMException && e.name === "AbortError") {
+				setError("Recovery cancelled. Accepted plan unchanged.");
+				return;
+			}
 			setError(
 				e instanceof Error
 					? e.message
@@ -96,6 +121,7 @@ export function RecoveryPanel({
 		} finally {
 			request.current = null;
 			setBusy(false);
+			onBusyChange(false);
 		}
 	}
 	return (
@@ -156,10 +182,10 @@ export function RecoveryPanel({
 			)}
 			{reason === "deadline" && (
 				<label>
-					Extend deadline by days
+					Move deadline by days (negative moves earlier)
 					<input
 						type="number"
-						min="1"
+						min="-365"
 						max="365"
 						step="1"
 						value={amount}
@@ -230,7 +256,7 @@ export function RecoveryPanel({
 			)}
 			<button
 				className="primary-button"
-				disabled={!accepted || busy}
+				disabled={!accepted || busy || disabled}
 				onClick={recover}
 			>
 				{busy ? "Finding a repair…" : "Review a recovery plan"}

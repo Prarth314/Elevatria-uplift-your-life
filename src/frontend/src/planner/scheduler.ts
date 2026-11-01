@@ -1,5 +1,6 @@
 import { validPlanning } from "./schedule-validation.ts";
 import type { Workspace } from "./model.ts";
+import { validWorkspace } from "./model.ts";
 import type {
 	ScheduleSettings,
 	Schedule,
@@ -98,6 +99,10 @@ export function generateSchedule(
 	if (!Number.isFinite(now)) throw Error("The scheduling clock is invalid.");
 	const graphErrors = dependencyErrors(workspace);
 	if (graphErrors.length) throw Error(graphErrors.join(" "));
+	if (!validWorkspace({ version: 1, goals: workspace.goals, items: [] }))
+		throw Error(
+			"Goals contain invalid dates, estimates, budgets or duplicate IDs. Review goal and task fields before scheduling.",
+		);
 	const tasks = workspace.goals.flatMap((g) =>
 		g.milestones.flatMap((m) => m.tasks.map((t) => ({ ...t, goal: g }))),
 	);
@@ -297,6 +302,43 @@ export function scheduleViolations(
 	settings: ScheduleSettings,
 	schedule: Schedule,
 ): string[] {
+	return checkSchedule(
+		workspace,
+		settings,
+		schedule,
+		(createdAt) => availableSlots(settings, Date.parse(createdAt)).slots,
+	);
+}
+/** Per-run cache only: candidate schedules share immutable inputs and clock.
+ * The validator still independently checks every candidate allocation and shape.
+ */
+export function scheduleValidator(
+	workspace: Workspace,
+	settings: ScheduleSettings,
+) {
+	const snapshot = structuredClone({
+		version: 1 as const,
+		goals: workspace.goals,
+		items: [],
+	});
+	const preferences = structuredClone(settings);
+	let clock: string | undefined;
+	let slots: Slot[] = [];
+	return (schedule: Schedule) =>
+		checkSchedule(snapshot, preferences, schedule, (createdAt) => {
+			if (createdAt !== clock) {
+				slots = availableSlots(preferences, Date.parse(createdAt)).slots;
+				clock = createdAt;
+			}
+			return slots;
+		});
+}
+function checkSchedule(
+	workspace: Workspace,
+	settings: ScheduleSettings,
+	schedule: Schedule,
+	slotsFor: (createdAt: string) => Slot[],
+): string[] {
 	if (!validPlanning({ settings, accepted: schedule, history: [] }))
 		return ["Schedule data is invalid or exceeds supported limits."];
 	const errors: string[] = [];
@@ -307,7 +349,7 @@ export function scheduleViolations(
 		effort = new Map<string, number>(),
 		weekly = new Map<string, number>(),
 		grouped = new Map<string, Session[]>();
-	const { slots } = availableSlots(settings, Date.parse(schedule.createdAt));
+	const slots = slotsFor(schedule.createdAt);
 	const sessions = [...schedule.sessions].sort((a, b) =>
 		a.start.localeCompare(b.start),
 	);
@@ -356,6 +398,16 @@ export function scheduleViolations(
 		const allocated = effort.get(t.id) ?? 0;
 		if (!t.completed && allocated + (remainders.get(t.id) ?? 0) !== t.minutes)
 			errors.push("Task effort is missing or overallocated.");
+		let consumed = 0;
+		for (const session of grouped.get(t.id) ?? []) {
+			const duration =
+				(Date.parse(session.end) - Date.parse(session.start)) / minute;
+			if (duration < Math.min(15, t.minutes - consumed))
+				errors.push(
+					"Session is shorter than the minimum usable task fragment.",
+				);
+			consumed += duration;
+		}
 		const first = grouped.get(t.id)?.[0];
 		if (first)
 			for (const id of t.dependsOn ?? []) {
