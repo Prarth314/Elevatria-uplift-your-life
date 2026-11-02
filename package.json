@@ -14,7 +14,10 @@
     "audit": "node scripts/audit-source.mjs",
     "dev:api": "node scripts/api-server.mjs",
     "typecheck:server": "node src/frontend/node_modules/typescript/bin/tsc -p tsconfig.server.json --noEmit",
-    "benchmark": "node scripts/benchmark-scheduler.ts"
+    "benchmark": "node scripts/benchmark-scheduler.ts",
+    "verify:browser": "node scripts/browser-check.mjs",
+    "verify:browser:build": "npm run verify:browser:types && node scripts/browser-check.mjs --build-only",
+    "verify:browser:types": "node src/frontend/node_modules/typescript/bin/tsc --noEmit --module esnext --moduleResolution bundler --target es2022 --lib es2023,dom --allowImportingTsExtensions --strict --skipLibCheck scripts/browser-check.ts scripts/browser-observer.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.13",

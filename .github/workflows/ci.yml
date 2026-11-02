@@ -21,5 +21,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run verify:browser:build
       - run: npm run audit -- --history --dist
       - run: pnpm audit --audit-level low
