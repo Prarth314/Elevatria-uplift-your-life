@@ -1,0 +1,141 @@
+{
+  "commit": "6a388d8bfac31c7ef8ba22d9525ac779ce8b34eb",
+  "dirty": false,
+  "harnessBundleSha256": "58112ff78d3fa03def35e616ddd5efe4f261a3da703204f4e955ffd6db5066d9",
+  "recordedAt": "2026-11-02T17:00:12.176Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "hardwareConcurrency": 16,
+  "clock": "2026-10-26T08:00:00.000Z",
+  "warmup": 2,
+  "samples": 5,
+  "visibility": "visible",
+  "visibilityChanges": [],
+  "results": [
+    {
+      "shape": {
+        "name": "small-wide",
+        "tasks": 100,
+        "goals": 2,
+        "depth": 5,
+        "parents": 1,
+        "horizon": 14,
+        "windows": 2,
+        "commitments": 2,
+        "budget": 8
+      },
+      "seed": 314,
+      "coldValidatedRoundTrip": {
+        "samples": 5,
+        "medianMs": 21.7,
+        "maxMs": 26.6,
+        "minMs": 18.3
+      },
+      "coldReply": {
+        "samples": 5,
+        "medianMs": 19.5,
+        "maxMs": 24.5,
+        "minMs": 16.6
+      },
+      "mainThreadValidation": {
+        "samples": 5,
+        "medianMs": 1.8,
+        "maxMs": 2.2,
+        "minMs": 1.7
+      },
+      "coldValidatedRecovery": {
+        "samples": 5,
+        "medianMs": 38.1,
+        "maxMs": 40.4,
+        "minMs": 36.3
+      }
+    },
+    {
+      "shape": {
+        "name": "medium-dense",
+        "tasks": 300,
+        "goals": 3,
+        "depth": 20,
+        "parents": 4,
+        "horizon": 28,
+        "windows": 5,
+        "commitments": 12,
+        "budget": 12
+      },
+      "seed": 314,
+      "coldValidatedRoundTrip": {
+        "samples": 5,
+        "medianMs": 34.3,
+        "maxMs": 35,
+        "minMs": 33.2
+      },
+      "coldReply": {
+        "samples": 5,
+        "medianMs": 28.7,
+        "maxMs": 29.8,
+        "minMs": 28.1
+      },
+      "mainThreadValidation": {
+        "samples": 5,
+        "medianMs": 5.2,
+        "maxMs": 5.8,
+        "minMs": 4.6
+      },
+      "coldValidatedRecovery": {
+        "samples": 5,
+        "medianMs": 198.4,
+        "maxMs": 214.7,
+        "minMs": 193.1
+      }
+    },
+    {
+      "shape": {
+        "name": "large-deep",
+        "tasks": 1000,
+        "goals": 5,
+        "depth": 100,
+        "parents": 2,
+        "horizon": 56,
+        "windows": 7,
+        "commitments": 30,
+        "budget": 20
+      },
+      "seed": 314,
+      "coldValidatedRoundTrip": {
+        "samples": 5,
+        "medianMs": 67.5,
+        "maxMs": 75.9,
+        "minMs": 65.3
+      },
+      "coldReply": {
+        "samples": 5,
+        "medianMs": 55.7,
+        "maxMs": 66.8,
+        "minMs": 55.1
+      },
+      "mainThreadValidation": {
+        "samples": 5,
+        "medianMs": 9.9,
+        "maxMs": 13.7,
+        "minMs": 8.9
+      },
+      "coldValidatedRecovery": {
+        "samples": 5,
+        "medianMs": 632,
+        "maxMs": 665.5,
+        "minMs": 598.4
+      }
+    }
+  ],
+  "cancellation": {
+    "rejected": true,
+    "terminations": 1,
+    "abortToRejectionMs": 1.3999999994412065
+  },
+  "testPageFrames": {
+    "samples": 428,
+    "medianMs": 16.7,
+    "maxMs": 17.2,
+    "minMs": 16.1
+  },
+  "note": "Fresh real browser module workers using production entry and transport. Reply includes startup/clone/compute; validation is main-thread. Frame gaps describe the synthetic test page, not planner UI, INP or a user study. Five samples do not establish stable tail latency."
+}

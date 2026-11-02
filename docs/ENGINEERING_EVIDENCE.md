@@ -1,5 +1,9 @@
 # Engineering milestone evidence
 
+## Latest rerun — November 2, 2026
+
+[Full runnable-check report](VERIFICATION_2026-11-02.md): 61 tests, type/build/audit gates, real browser worker measurements, bounded planner UI profiling, actual JSON/ICS artifacts and read-only HTTP smoke checks passed. New verification tooling is local-only. The single-device browser-measurement gap is now addressed; hosted OAuth, screen-reader/user sessions and broader device profiling remain unverified. Earlier dated records below preserve their original evidence and limits.
+
 Reviewed November 1, 2026. This report supersedes older verification counts and limits where explicitly stated. It is evidence of implementation and engineering checks, not of user usefulness, satisfaction, or production-scale operation.
 
 ## Assessment and executed priorities

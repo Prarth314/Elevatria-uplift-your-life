@@ -1,5 +1,9 @@
 # Verification record
 
+## Latest rerun — November 2, 2026
+
+[Full runnable-check report](VERIFICATION_2026-11-02.md): 61 tests, type/build/audit gates, real browser worker measurements, bounded planner UI profiling, actual JSON/ICS artifacts and read-only HTTP smoke checks passed. New verification tooling is local-only. The single-device browser-measurement gap is now addressed; hosted OAuth, screen-reader/user sessions and broader device profiling remain unverified. Earlier dated records below preserve their original evidence and limits.
+
 ## Current engineering milestone — November 1, 2026
 
 The current local milestone has **61 passing tests**, including Web Lock coordination, worker lifecycle/entry integration, full-scheduler DST checks, independent ICS parsing and an exhaustive heuristic counterexample. Frontend/server type checks, production build, credential scan and dependency audit pass locally. See [ENGINEERING_EVIDENCE.md](ENGINEERING_EVIDENCE.md) for the capability/evidence matrix, current browser/artifact results and remaining external/human checks, [PLANNING_MODEL.md](PLANNING_MODEL.md) for exact semantics, and [BENCHMARKS.md](BENCHMARKS.md) for measurement boundaries. Older counts and public-verification limitations below are historical; their chronology is preserved rather than relabeled as current evidence.

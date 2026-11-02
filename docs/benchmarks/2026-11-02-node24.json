@@ -1,0 +1,282 @@
+{
+  "recordedAt": "2026-11-02T16:51:39.096Z",
+  "commit": "b44b69b74a37bdcfa0e6562b2a032987b95a2bb8",
+  "dirty": false,
+  "sourceSha256": "ed724b333582fd4921511798583a966ccc0710d449cfe3f3d08909a217472f4c",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpu": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics     ",
+    "logicalCpus": 16,
+    "memoryGiB": 15
+  },
+  "clock": "2026-10-26T08:00:00.000Z",
+  "warmup": 2,
+  "samples": 9,
+  "algorithm": "earliest-deadline-v1",
+  "boundaries": "Node monotonic clock; direct scheduling/repair includes independent validation. JSON/ICS include serialization/validation. Memory port is not real browser disk/storage. Worker bridge runs the actual production entry in Node worker_threads; cold includes startup, module imports, cloning and reply. Warm includes cloning, compute and reply; workerCompute excludes startup and clone. Termination awaits Node worker termination, not browser cancellation/UI paint. No timing thresholds in CI; p95 of nine is the observed maximum, not a stable population estimate.",
+  "results": [
+    {
+      "shape": {
+        "name": "small-wide",
+        "tasks": 100,
+        "goals": 2,
+        "depth": 5,
+        "parents": 1,
+        "horizon": 14,
+        "windows": 2,
+        "commitments": 2,
+        "budget": 8
+      },
+      "seed": 314,
+      "sessions": 46,
+      "unplacedMinutes": 2265,
+      "schedule": {
+        "samples": 9,
+        "minMs": 3.21,
+        "medianMs": 5.21,
+        "p95Ms": 7.09,
+        "maxMs": 7.09
+      },
+      "repair": {
+        "samples": 9,
+        "minMs": 22.54,
+        "medianMs": 26.68,
+        "p95Ms": 36.38,
+        "maxMs": 36.38
+      },
+      "jsonExport": {
+        "samples": 9,
+        "minMs": 0.04,
+        "medianMs": 0.04,
+        "p95Ms": 0.05,
+        "maxMs": 0.05
+      },
+      "jsonImport": {
+        "samples": 9,
+        "minMs": 0.51,
+        "medianMs": 0.54,
+        "p95Ms": 0.59,
+        "maxMs": 0.59
+      },
+      "memoryPortSaveLoad": {
+        "samples": 9,
+        "minMs": 0.97,
+        "medianMs": 1.27,
+        "p95Ms": 1.7,
+        "maxMs": 1.7
+      },
+      "icsExport": {
+        "samples": 9,
+        "minMs": 4.32,
+        "medianMs": 4.72,
+        "p95Ms": 5.34,
+        "maxMs": 5.34
+      },
+      "backupBytes": 24200,
+      "workerColdRoundTrip": {
+        "samples": 9,
+        "minMs": 82.54,
+        "medianMs": 86.96,
+        "p95Ms": 91.15,
+        "maxMs": 91.15
+      },
+      "workerWarmRoundTrip": {
+        "samples": 9,
+        "minMs": 3.75,
+        "medianMs": 4.54,
+        "p95Ms": 5.94,
+        "maxMs": 5.94
+      },
+      "workerCompute": {
+        "samples": 9,
+        "minMs": 3.28,
+        "medianMs": 4.07,
+        "p95Ms": 5.17,
+        "maxMs": 5.17
+      },
+      "workerTermination": {
+        "samples": 9,
+        "minMs": 6.67,
+        "medianMs": 7.38,
+        "p95Ms": 9.83,
+        "maxMs": 9.83
+      }
+    },
+    {
+      "shape": {
+        "name": "medium-dense",
+        "tasks": 300,
+        "goals": 3,
+        "depth": 20,
+        "parents": 4,
+        "horizon": 28,
+        "windows": 5,
+        "commitments": 12,
+        "budget": 12
+      },
+      "seed": 314,
+      "sessions": 150,
+      "unplacedMinutes": 6405,
+      "schedule": {
+        "samples": 9,
+        "minMs": 14.03,
+        "medianMs": 16.57,
+        "p95Ms": 18.45,
+        "maxMs": 18.45
+      },
+      "repair": {
+        "samples": 9,
+        "minMs": 207.13,
+        "medianMs": 243.44,
+        "p95Ms": 291.72,
+        "maxMs": 291.72
+      },
+      "jsonExport": {
+        "samples": 9,
+        "minMs": 0.22,
+        "medianMs": 0.22,
+        "p95Ms": 0.26,
+        "maxMs": 0.26
+      },
+      "jsonImport": {
+        "samples": 9,
+        "minMs": 1.55,
+        "medianMs": 2.42,
+        "p95Ms": 2.59,
+        "maxMs": 2.59
+      },
+      "memoryPortSaveLoad": {
+        "samples": 9,
+        "minMs": 2.75,
+        "medianMs": 4.31,
+        "p95Ms": 4.78,
+        "maxMs": 4.78
+      },
+      "icsExport": {
+        "samples": 9,
+        "minMs": 19.09,
+        "medianMs": 21.03,
+        "p95Ms": 32.83,
+        "maxMs": 32.83
+      },
+      "backupBytes": 80351,
+      "workerColdRoundTrip": {
+        "samples": 9,
+        "minMs": 111.32,
+        "medianMs": 120.84,
+        "p95Ms": 133.32,
+        "maxMs": 133.32
+      },
+      "workerWarmRoundTrip": {
+        "samples": 9,
+        "minMs": 18.71,
+        "medianMs": 21.78,
+        "p95Ms": 27.99,
+        "maxMs": 27.99
+      },
+      "workerCompute": {
+        "samples": 9,
+        "minMs": 17.63,
+        "medianMs": 20.64,
+        "p95Ms": 26.42,
+        "maxMs": 26.42
+      },
+      "workerTermination": {
+        "samples": 9,
+        "minMs": 6.02,
+        "medianMs": 6.9,
+        "p95Ms": 9.09,
+        "maxMs": 9.09
+      }
+    },
+    {
+      "shape": {
+        "name": "large-deep",
+        "tasks": 1000,
+        "goals": 5,
+        "depth": 100,
+        "parents": 2,
+        "horizon": 56,
+        "windows": 7,
+        "commitments": 30,
+        "budget": 20
+      },
+      "seed": 314,
+      "sessions": 191,
+      "unplacedMinutes": 30900,
+      "schedule": {
+        "samples": 9,
+        "minMs": 51.2,
+        "medianMs": 55.43,
+        "p95Ms": 73.26,
+        "maxMs": 73.26
+      },
+      "repair": {
+        "samples": 9,
+        "minMs": 795.93,
+        "medianMs": 919.38,
+        "p95Ms": 1087.35,
+        "maxMs": 1087.35
+      },
+      "jsonExport": {
+        "samples": 9,
+        "minMs": 0.47,
+        "medianMs": 0.6,
+        "p95Ms": 0.75,
+        "maxMs": 0.75
+      },
+      "jsonImport": {
+        "samples": 9,
+        "minMs": 2.84,
+        "medianMs": 3.15,
+        "p95Ms": 4.19,
+        "maxMs": 4.19
+      },
+      "memoryPortSaveLoad": {
+        "samples": 9,
+        "minMs": 5.49,
+        "medianMs": 8.57,
+        "p95Ms": 10.38,
+        "maxMs": 10.38
+      },
+      "icsExport": {
+        "samples": 9,
+        "minMs": 18.53,
+        "medianMs": 22.31,
+        "p95Ms": 34.53,
+        "maxMs": 34.53
+      },
+      "backupBytes": 233022,
+      "workerColdRoundTrip": {
+        "samples": 9,
+        "minMs": 146.33,
+        "medianMs": 160.01,
+        "p95Ms": 174.59,
+        "maxMs": 174.59
+      },
+      "workerWarmRoundTrip": {
+        "samples": 9,
+        "minMs": 54.48,
+        "medianMs": 62.3,
+        "p95Ms": 70.24,
+        "maxMs": 70.24
+      },
+      "workerCompute": {
+        "samples": 9,
+        "minMs": 51.42,
+        "medianMs": 59.34,
+        "p95Ms": 66.93,
+        "maxMs": 66.93
+      },
+      "workerTermination": {
+        "samples": 9,
+        "minMs": 5.4,
+        "medianMs": 5.86,
+        "p95Ms": 7.09,
+        "maxMs": 7.09
+      }
+    }
+  ]
+}

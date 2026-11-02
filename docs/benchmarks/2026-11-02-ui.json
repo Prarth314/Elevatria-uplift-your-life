@@ -1,0 +1,25 @@
+{
+  "durationMs": 10808.900000000373,
+  "frameSamples": 631,
+  "medianFrameGapMs": 16.69999999999709,
+  "maxFrameGapMs": 200,
+  "longTaskSupported": true,
+  "longTasks": [],
+  "initialVisibility": "visible",
+  "finalVisibility": "visible",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+  "note": "Observed synthetic planner interactions on this device. Frame gaps include browser/automation/background effects; not INP, a production SLA or a usability result.",
+  "context": {
+    "applicationCommit": "b44b69b74a37bdcfa0e6562b2a032987b95a2bb8",
+    "harnessWasUncommitted": true,
+    "reviewedDate": "2026-11-02",
+    "synthetic": true,
+    "interactions": [
+      "goal date and hours edit",
+      "coordinated save",
+      "availability",
+      "schedule generation and acceptance",
+      "keyboard task completion"
+    ]
+  }
+}

@@ -129,6 +129,8 @@ The API binds to 127.0.0.1:5176; Vite proxies /api to it. Restart both processes
 | `npm run audit -- --history --dist` | Scan source, supported Git text history and output without echoing matched credentials |
 | `pnpm audit --audit-level low` | Check the dependency graph against current advisories |
 | `npm run benchmark` | Run repeatable synthetic scheduling measurements |
+| `npm run verify:browser` | Start the local-only real-browser benchmark and UI profiler after building |
+| `npm run verify:browser:build` | Type-check and build the verification harness without starting its server |
 
 <details>
 <summary><strong>Local setup troubleshooting</strong></summary>
@@ -197,6 +199,8 @@ The original Motoko backend has no goal/task API and depends on separate platfor
 The local demo is **one unencrypted board per browser origin**, not an authorized account store. Clearing browser data removes it. Account sessions use tab-scoped sessionStorage; account documents are kept out of the demo store. Export files contain your board. Retired prototype auth/provider-key entries are removed on startup without reading their contents; unrelated legacy board/chat data is preserved.
 
 ## Engineering evidence
+
+**Latest verification:** [November 2 runnable-check report](docs/VERIFICATION_2026-11-02.md) · [Reproduce browser measurements](docs/BROWSER_VERIFICATION.md). The 1,000-task browser fixture measured 67.5 ms median for a fresh scheduling worker plus validation and 632 ms for recovery on the tested device; these are synthetic observations, not guaranteed latencies.
 
 [Domain semantics](docs/PLANNING_MODEL.md) · [Capability/evidence matrix](docs/ENGINEERING_EVIDENCE.md) · [Measured benchmarks](docs/BENCHMARKS.md) · [Synthetic demo](docs/DEMO.md) · [Usability study kit](docs/USABILITY_STUDY.md)
 
